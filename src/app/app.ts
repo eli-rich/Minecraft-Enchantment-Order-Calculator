@@ -125,8 +125,16 @@ export class CalculatorApp {
     } else if (action === 'set-input-item') {
       const input = this.inputById(target.dataset.inputId);
       if (!input) return;
+      const baseInput = this.state.inputs.find(candidate => candidate.item !== 'enchanted_book');
       input.item = target.value;
       input.enchantments = levelsForItem(input.enchantments, input.item, this.state.edition);
+      if (baseInput?.id === input.id && input.item !== 'enchanted_book') {
+        for (const candidate of this.state.inputs) {
+          if (candidate.id === input.id || candidate.item === 'enchanted_book') continue;
+          candidate.item = input.item;
+          candidate.enchantments = levelsForItem(candidate.enchantments, candidate.item, this.state.edition);
+        }
+      }
       this.commit();
     } else if (action === 'set-prior-work') {
       const input = this.inputById(target.dataset.inputId);

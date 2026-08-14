@@ -27,6 +27,23 @@ describe('calculator UI', () => {
     expect(document.querySelectorAll('.input-card')).toHaveLength(2);
   });
 
+  it('limits additional inputs to books or the base item', () => {
+    change(document.querySelector<HTMLInputElement>('input[name="mode"][value="advanced"]')!);
+    change(document.querySelector<HTMLSelectElement>('[data-action="set-input-item"]')!, 'sword');
+    document.querySelector<HTMLButtonElement>('[data-action="add-input"]')?.click();
+
+    const inputs = document.querySelectorAll<HTMLSelectElement>('[data-action="set-input-item"]');
+    expect(Array.from(inputs[0]!.options).some(option => option.value === 'axe')).toBe(true);
+    expect(Array.from(inputs[1]!.options).map(option => option.value)).toEqual(['sword', 'enchanted_book']);
+  });
+
+  it('places the add-input control after the input cards', () => {
+    change(document.querySelector<HTMLInputElement>('input[name="mode"][value="advanced"]')!);
+    const list = document.querySelector('.input-list')!;
+    const button = document.querySelector('[data-action="add-input"]')!;
+    expect(list.compareDocumentPosition(button) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
   it('calculates a books-mode result', async () => {
     change(document.querySelector<HTMLSelectElement>('[data-action="add-enchantment"]')!, '2');
     change(document.querySelector<HTMLSelectElement>('[data-action="add-enchantment"]')!, '7');

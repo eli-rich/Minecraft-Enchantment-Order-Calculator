@@ -83,6 +83,17 @@ const itemOptions = (state: CalculatorState, current: string, includeBlank = fal
     .join('')}`;
 };
 
+const inputItemOptions = (state: CalculatorState, input: InputItem) => {
+  const baseInput = state.inputs.find(candidate => candidate.item !== 'enchanted_book');
+  if (!baseInput || baseInput.id === input.id) return itemOptions(state, input.item);
+
+  const allowedKeys = new Set([baseInput.item, 'enchanted_book']);
+  return itemsForEdition(state.edition)
+    .filter(item => allowedKeys.has(item.key))
+    .map(item => `<option value="${item.key}"${selected(item.key === input.item)}>${escapeHtml(item.label)}</option>`)
+    .join('');
+};
+
 export const renderInputCard = (state: CalculatorState, input: InputItem, index: number) => `
   <article class="input-card${input.bypassed ? ' is-bypassed' : ''}" data-input-id="${escapeHtml(input.id)}">
     <header class="card-header">
@@ -102,7 +113,7 @@ export const renderInputCard = (state: CalculatorState, input: InputItem, index:
       <label>
         <span>Item</span>
         <select data-action="set-input-item" data-input-id="${escapeHtml(input.id)}">
-          ${itemOptions(state, input.item)}
+          ${inputItemOptions(state, input)}
         </select>
       </label>
       <label>

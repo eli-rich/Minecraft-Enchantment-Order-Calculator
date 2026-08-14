@@ -110,9 +110,11 @@ export const renderApp = (state: CalculatorState, view: ViewState) => `
           ? `<section class="inputs-section">
               <div class="section-heading">
                 <div><span class="eyebrow">What you have</span><h2>Input items</h2></div>
-                <button class="secondary-button" type="button" data-action="add-input">Add input</button>
               </div>
               <div class="input-list">${state.inputs.map((input, index) => renderInputCard(state, input, index)).join('')}</div>
+              <div class="add-input-row">
+                <button class="secondary-button" type="button" data-action="add-input">Add input</button>
+              </div>
             </section>`
           : ''
       }
