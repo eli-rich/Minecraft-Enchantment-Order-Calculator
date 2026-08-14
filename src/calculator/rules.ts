@@ -20,14 +20,11 @@ export const getEditionMultiplier = (edition: Edition, enchantmentId: number) =>
 export const getEnchantmentCost = (enchantmentId: number, source: 'item' | 'book') =>
   catalog.enchantmentById.get(enchantmentId)?.costs[source] ?? 0;
 
-export const getMaximumLevel = (enchantmentId: number) =>
-  catalog.enchantmentById.get(enchantmentId)?.maxLevel ?? 0;
+export const getMaximumLevel = (enchantmentId: number) => catalog.enchantmentById.get(enchantmentId)?.maxLevel ?? 0;
 
-export const getConflicts = (enchantmentId: number) =>
-  catalog.enchantmentById.get(enchantmentId)?.conflicts ?? [];
+export const getConflicts = (enchantmentId: number) => catalog.enchantmentById.get(enchantmentId)?.conflicts ?? [];
 
 export const isValidForItem = (itemKey: string, enchantmentId: number) =>
   catalog.itemByKey.get(itemKey)?.enchantments.includes(enchantmentId) ?? false;
 
-export const sourceType = (enchantments: SearchEnchantments): 'item' | 'book' =>
-  enchantments.item ? 'item' : 'book';
+export const sourceType = (enchantments: SearchEnchantments): 'item' | 'book' => (enchantments.item ? 'item' : 'book');

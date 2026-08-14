@@ -49,9 +49,7 @@ export const searchFast = (weights: number[]): FastSearchResult => {
   }
 
   const sortedWeights = weights[0] === 0 ? weights.slice(1).sort((left, right) => right - left) : [...weights].sort();
-  let best:
-    | { candidate: TreeCandidate; priorWorkCost: number; enchantmentCost: number; total: number }
-    | undefined;
+  let best: { candidate: TreeCandidate; priorWorkCost: number; enchantmentCost: number; total: number } | undefined;
 
   for (const [priorCost, candidates] of Object.entries(candidatesByCost)) {
     for (const candidate of candidates) {
@@ -86,9 +84,7 @@ const permutations = function* <T>(values: T[], start = 0): Generator<T[]> {
 };
 
 const bestOrderingForTree = (items: SearchItem[], candidate: TreeCandidate, options: SearchOptions) => {
-  let best:
-    | { orderedItems: SearchItem[]; enchantmentCost: number; priorWorkCost: number; total: number }
-    | undefined;
+  let best: { orderedItems: SearchItem[]; enchantmentCost: number; priorWorkCost: number; total: number } | undefined;
 
   for (const orderedItems of permutations([...items])) {
     if (!orderedItems[0]?.enchant.item) continue;

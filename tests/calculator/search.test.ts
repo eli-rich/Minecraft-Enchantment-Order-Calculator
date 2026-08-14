@@ -12,7 +12,10 @@ describe('calculator search regression fixtures', () => {
   it('preserves the legacy fast-search result', () => {
     expect(searchFast([0, 1, 2, 3])).toEqual({
       orderedWeights: [0, 2, 3, 1],
-      structure: [[0, 1], [1, 2]],
+      structure: [
+        [0, 1],
+        [1, 2],
+      ],
       priorWorkCost: 2,
       enchantmentCost: 7,
     });

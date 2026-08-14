@@ -75,9 +75,7 @@ export class TreeEvaluator {
         return { cost: 0, enchant: {}, height: 0 };
       }
 
-      const priorIndex = item.enchant.prior
-        ? PRIOR_WORK_COSTS.findIndex(cost => cost === item.enchant.prior)
-        : 0;
+      const priorIndex = item.enchant.prior ? PRIOR_WORK_COSTS.findIndex(cost => cost === item.enchant.prior) : 0;
       const value: NodeValue = {
         cost: item.cost,
         enchant: cloneEnchantments(item.enchant),
@@ -133,9 +131,7 @@ export class TreeEvaluator {
       }
 
       const finalLevel =
-        leftLevel === rightLevel
-          ? Math.min(getMaximumLevel(id), leftLevel + 1)
-          : Math.max(leftLevel, rightLevel);
+        leftLevel === rightLevel ? Math.min(getMaximumLevel(id), leftLevel + 1) : Math.max(leftLevel, rightLevel);
       const multiplier = getEnchantmentCost(id, sourceType(right));
       cost += getLevelCost(this.edition, leftLevel, finalLevel) * multiplier * getEditionMultiplier(this.edition, id);
       result[id] = finalLevel;

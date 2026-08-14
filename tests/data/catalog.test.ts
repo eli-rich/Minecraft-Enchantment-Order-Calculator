@@ -25,4 +25,14 @@ describe('catalog', () => {
   it('marks Sweeping Edge as Java-only', () => {
     expect(catalog.enchantmentById.get(1000)?.editions).toEqual(['java']);
   });
+
+  it('has valid levels, costs, and edition support', () => {
+    for (const enchantment of catalog.enchantments) {
+      expect(enchantment.maxLevel).toBeGreaterThan(0);
+      expect(enchantment.costs.book).toBeGreaterThan(0);
+      expect(enchantment.costs.item).toBeGreaterThan(0);
+      expect(enchantment.editions.length).toBeGreaterThan(0);
+    }
+    for (const item of catalog.items) expect(item.editions.length).toBeGreaterThan(0);
+  });
 });

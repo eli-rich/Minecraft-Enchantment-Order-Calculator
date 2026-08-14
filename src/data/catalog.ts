@@ -27,9 +27,7 @@ export const enchantmentsForItem = (itemKey: string, edition: Edition) => {
 
   return item.enchantments
     .map(id => catalog.enchantmentById.get(id))
-    .filter((enchantment): enchantment is EnchantmentDefinition =>
-      Boolean(enchantment?.editions.includes(edition)),
-    );
+    .filter((enchantment): enchantment is EnchantmentDefinition => Boolean(enchantment?.editions.includes(edition)));
 };
 
 export const formatItemLabel = (itemKey: string) => catalog.itemByKey.get(itemKey)?.label ?? itemKey;

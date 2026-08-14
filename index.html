@@ -1,113 +1,19 @@
-<html lang="en" dir="ltr">
+<!doctype html>
+<html lang="en">
   <head>
-    <meta charset="utf-8"><!-- Primary Meta Tags -->
-    <!-- Primary Meta Tags -->
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#26382a" />
+    <meta name="description" content="Find the cheapest Minecraft anvil order for Java or Bedrock Edition." />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Minecraft Enchantment Order Calculator" />
+    <meta property="og:description" content="Calculate the optimal order for combining enchanted items and books." />
     <title>Minecraft Enchantment Order Calculator</title>
-    <link rel="icon" type="image/x-icon" href="favicon.ico">
-    <meta name="google-site-verification" content="ioA-lrjLj0ssctazZrXavWe0RnkM4eIgbpvHiuwUwG8" />
-    <meta name="title" content="Minecraft Enchantment Order Calculator">
-    <meta name="description" content="Minecraft optimal enchantment order calculator in anvil. Search the best enchanting order within a second. ">
-
-    <!-- Open Graph / Facebook -->
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://kkchengaf.github.io/Minecraft-Enchantment-Order-Calculator/">
-    <meta property="og:title" content="Minecraft Enchantment Order Calculator">
-    <meta property="og:description" content="Minecraft optimal enchantment order calculator in anvil. Search the best enchanting order within a second. ">
-
-    <!-- Twitter -->
-    <meta property="twitter:url" content="https://kkchengaf.github.io/Minecraft-Enchantment-Order-Calculator/">
-    <meta property="twitter:title" content="Minecraft Enchantment Order Calculator">
-    <meta property="twitter:description" content="Minecraft optimal enchantment order calculator in anvil. Search the best enchanting order within a second. ">
-      <link rel="stylesheet" href="style.css">
-      <script type="text/javascript" src="search.js"></script>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
   </head>
-  <body class="pad pad-top">
-    <div class="div-header banner cursor-pointer" onclick="toggleGuide(event)">
-        Minecraft Enchantment Order Calculator
-        <div class="right-align" >
-            Reference Page: <a href="https://minecraft.fandom.com/wiki/Anvil_mechanics" target="_blank">Minecraft Fandom Wiki</a>
-        </div>
-        <div class="right-align" >
-            Github: <a href="https://github.com/kkchengaf/Minecraft-Enchantment-Order-Calculator/" target="_blank">Github</a>
-        </div>
-    </div>
-    <div class="div-guide div-header cursor-pointer" onclick="toggleGuide(event)">
-        <div class="div-title" title="click on banner to toggler guide">
-            Calculate the most optimal enchantment order in Minecraft. There are 2 Modes available:<br>
-            (1) Combining multiple books (with 1 enchantment) to an item: specify the item in "Final Outcome" and select the enchantments.<br>
-            (2) Combine multiple enchanted items and books together: add items one by one in "Input Item" Corner and select the enchant.<br>
-            In (2), you can define the outcome with specific enchantments: select the enchantment in "Output Condition".<br><br>
-
-            To remove an item/enchant, select the blank option, or set the level to 0. <br>
-            Once everything is set, click search. (add at least 3 items/enchantments to search) <br>
-            You can save the search result as image, and reload it by dragging the image into this page.<br>
-        </div>
-    </div>
-
-
-    <div class="history-button-group row-flex">
-        <div class="reset-option-button row-flex cursor-pointer" onclick="historyReset()">
-            <div class="select-box-hint mode-button-hint" title="reset workspace">Reset</div>
-        </div>
-    </div>
-
-    <div class="mode-button-group row-flex">
-        <div class="mode-button row-flex cursor-pointer" onclick="switchMode(1)">
-            <div class="select-box-hint mode-button-hint" title="mode 1 suitable for:
-            an unenchanted item + enchanted books from villager">Mode 1</div>
-            <div class="select-box-content mode-button-des" title="switch to mode 1">Single Enchanted Books Search</div>
-        </div>
-        <div class="mode-button row-flex cursor-pointer" onclick="switchMode(2)" >
-            <div class="select-box-hint mode-button-hint" title="mode 2 suitable for:
-            enchanted items from enchanting + enchanted books
-            enchanted items from villager + enchanted books
-            enchanted items from looting + enchanted books
-            any combination of items and/or enchanted books
-            ">Mode 2</div>
-            <div class="select-box-content mode-button-des" title="switch to mode 2">Advance Combination Search</div>
-        </div>
-        <div class="option-button god-armor-option-button row-flex cursor-pointer" onclick="toggleGodArmor()">
-            <div class="select-box-hint mode-button-hint" title="remove protections mutually exclusive in MC 1.14&#010;remove inifinity mending mutually exclusive from 1.9 to 1.11">God Armor</div>
-        </div>
-    </div>
-
-    <div class="div-col-con pad-medium">
-        <div class="div-col-cell left">
-            <div class="" id="input"></div>
-        </div>
-
-        <div class="div-col-cell right">
-            <div class="" id="output"><hr>
-                <div class="output-item-label select-box-hint" title=""></div>
-                <div class="row-flex">
-                    <div class="select-box-hint" id="selectoutputhint">Item Name</div>
-                    <select class="select-box-content" name="item" id="selectoutput" title="select an item"></select>
-                </div>
-                <div class="" id="output-enchantments">
-                </div>
-                <div class="select-box-hint button cursor-pointer" id="search-button" onclick="prune()" title="search (cache workspace)">Search</div>
-
-                <div class="div-message" id="quick-message"></div>
-                <div class="div-message" id="error-message"></div>
-                <div class="div-message" id="result-message"></div>
-            </div>
-        </div>
-    </div>
-
-    <div class="" id="result-tree">
-    </div>
-
-    <div class="" id="result-tree-button">
-    </div>
-
-    <div class="">
-        <canvas class="" id="result-tree-canvas" width="900" height="0" style="display:none">
-        </canvas>
-    </div>
-    <div class="" id="datalist-area">
-    </div>
-
-      <script type="text/javascript" src="parse.js"></script>
-
+  <body>
+    <div id="app"></div>
+    <noscript>This calculator requires JavaScript.</noscript>
+    <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
