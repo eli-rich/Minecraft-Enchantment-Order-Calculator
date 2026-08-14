@@ -20,6 +20,14 @@ describe('calculator UI', () => {
     expect(document.body.textContent).toContain('Java');
   });
 
+  it('credits and links to the original project', () => {
+    const sourceLink = document.querySelector<HTMLAnchorElement>(
+      'a[href="https://github.com/kkchengaf/Minecraft-Enchantment-Order-Calculator"]',
+    );
+    expect(document.querySelector('footer')?.textContent).toContain('kkchengaf');
+    expect(sourceLink?.textContent).toContain('View source project');
+  });
+
   it('switches to advanced mode and adds inputs', () => {
     change(document.querySelector<HTMLInputElement>('input[name="mode"][value="advanced"]')!);
     expect(document.querySelectorAll('.input-card')).toHaveLength(1);

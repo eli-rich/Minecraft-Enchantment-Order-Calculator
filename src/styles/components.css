@@ -519,4 +519,13 @@
   footer p {
     font-size: 0.85rem;
   }
+
+  footer .attribution {
+    margin-top: 0.35rem;
+  }
+
+  footer .attribution a {
+    color: var(--green-700);
+    font-weight: 700;
+  }
 }

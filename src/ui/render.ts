@@ -135,4 +135,9 @@ export const renderApp = (state: CalculatorState, view: ViewState) => `
 
   <footer>
     <p>Runs entirely in your browser. No worlds, accounts, or item data are uploaded.</p>
+    <p class="attribution">
+      Original calculator and search algorithm by
+      <a href="https://github.com/kkchengaf" target="_blank" rel="noreferrer">kkchengaf</a>
+      · <a href="https://github.com/kkchengaf/Minecraft-Enchantment-Order-Calculator" target="_blank" rel="noreferrer">View source project</a>
+    </p>
   </footer>`;
