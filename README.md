@@ -1,94 +1,115 @@
-# Minecraft-Enchantment-Order-Calculator
-Calculate the most optimal enchantment order in Minecraft (in anvil).
+# Minecraft Enchantment Order Calculator
 
-This program uses precomputed binary trees to optimize the fast searching.
-It searches from the optimal sets to get the best result.
+A browser-based calculator for finding the least-expensive order for combining Minecraft items and enchanted books in an anvil. It supports both **Bedrock Edition** and **Java Edition** rules and runs entirely in the browser.
 
----
-<details>
-  <summary> Optimization Details for fast search (credit if it help!) </summary>
-  
-  ## Background
-  1. The whole process of combining books to an item can be viewed as a full binary tree: 
-     * the root is the final output
-     * the leaves are the inputs
-     * the intermediate nodes are the intermediate outputs from anvil
-     * each node stores 3 values:
-       * enchantment cost: the sum of cost multiplier of the enchantments of this item
-       * anvil cost: the prior work penalty of this item
-       * total cost: the cost to combine this item
-  
-  2. For each intermediate node, we "combine" the right child to the left child, the same as combining in anvil. 
-  3. **The order of child nodes matters because the combining mechanism ignores the enchantment cost of the left child.**
-     * In other words, **only the enchantment cost in right child** will be used to calculate the cost. (VERY IMPORTANT)
-  4. The anvil cost of intermediate node, is the distance to the deepest descendant. For Leaves, the cost is zero. 
-     * Anvil cost can be computed without knowing the inputs enchants. **Anvil cost is associated to the tree structure**.
-  
-  ## Problem
-  * Given a set of leaf nodes, our goal is to construct an optimal binary tree, so that the whole process results in lowest total cost in root.
-  * As we do a post order traversal through the tree, we can get the cost of combining in each step (each combine in anvil).
-  
-  ## Intuitive Approach
-  * The most straight forward approach is to build all the trees, then permutate all the inputs mapped to the leaves. But this will take a very long time.
-    * For instance, lets assume we have a boot and 7 books. 
-    * There are 429 distinct full trees in total, and for each tree, there are 7! permutations. 
-    * This results in **2.16 million combinations**. It would be better to remove some of the trees from the computation. 
-  
-  ## Optimization
-  1. For every intermediate node, we know that only the right child's enchantment will be used to calculate the intermediate combining cost. 
-     * **For each input item on the right, it contributes its enchantment cost to its intermediate output.**
-     * **For all intermediate outputs on the right, it contributes its enchantment cost to its next intermediate output/final output.**
-     * This means, if we arrange the items with less enchantment cost to right and the one with higher cost to left, the total enchantment cost will be lower. 
-     * The reason is that the **lower cost item occupy the leaves with the most number of "contribution", while the higher cost item occupy the leaves with least number of "contribution"**.
+The search uses precomputed binary-tree structures to avoid evaluating every possible anvil tree. Advanced searches run in a Web Worker so the page remains responsive.
 
-  2. Next step, we can calculate the amount of contributions of the leaves for all the trees, and filter out some of the trees. 
-     * The filter is simple. We only want those trees with minimal "contribution" of all leaves. This makes the nodes lie on the left side.
-     * Note that we also need to consider the anvil cost. Different tree structures yields different anvil costs, we keep all optimal trees for all different anvil costs.
-     * This steps reduces great amount of trees. For trees with 8 leaf nodes, there are only 22 trees remains (with 8 distinct anvil costs). 
+## Features
 
-  3. Now we have a list of contributions for all trees, we need to match the enchantment costs (inputs') to the "contributions" (leaves). 
-**We want to match the high enchantment cost to less contributions, and low cost to more contributions.** 
-     * We can get the total cost of enchantment instantly after **sorting on both lists**. multiply each item on both sorted lists and its done.
-     * After the optimization, we only need to consider **22 combinations**, and the sorting of 8 inputs' enchantment costs! 
-</details>
+- Bedrock and Java rules, with Bedrock selected by default
+- A fast mode for one clean item plus individual enchanted books
+- An advanced mode for combining existing enchanted items and books
+- Prior work penalties and optional output conditions
+- Optional legacy God Armor and Infinity/Mending combinations
+- Step-by-step results with enchantment and prior-work cost breakdowns
+- Result PNG downloads that can be dropped back onto the page to restore a workspace
+- Local workspace persistence
+- Responsive, keyboard-accessible UI with no framework or server dependency
 
----
+## Development
 
-Calculator: https://kkchengaf.github.io/Minecraft-Enchantment-Order-Calculator/
+This project uses [Bun](https://bun.sh/) and Vite.
 
-There are 2 modes available:
-- 1 tool + multiple enchantment books (fast)
-- multiple tools and books (brute force):
-  - can specify the target
+```sh
+bun install
+bun run dev
+```
 
-Supported Features:
-- Items with prior work penalty
-  - Prior work penalty = cost to to rename the item - 1 (just put in anvil to check the cost, no need really to rename it)
-- Save result as image 
-- Reload the result (drag and drop the image into the page)
-- God Armor (where protection enchantments are not mutually exclusive from MC 1.14 to 1.14.2)
+Useful commands:
 
+```sh
+bun run build          # Type-check and create the production build in dist/
+bun run preview        # Preview the production build
+bun run typecheck      # Run TypeScript without emitting files
+bun run test           # Run the Vitest suite
+bun run format         # Format maintained files with Prettier
+bun run format:check   # Verify formatting without writing files
+```
 
-## Mode 1 (fast search)
-![input_boots1](https://user-images.githubusercontent.com/55171652/171546996-b56b6cbb-7823-4d75-9acf-46ba0c949a2b.PNG)
+The `dist/` directory is ordinary static output and can be deployed to Vercel, Cloudflare Pages, GitHub Pages with a custom domain, or any other static host. The Vite base is `/`, so the production site is expected to be served from a domain root.
 
-### Search Result:
-![enchantments_order_boots1](https://user-images.githubusercontent.com/55171652/171384057-4b974142-e1b3-4e10-aa76-fa217a24e492.png)
+## Project structure
 
+```text
+src/
+  app/          State, validation, search orchestration, results, and PNG persistence
+  calculator/   Pure edition rules, tree evaluation, optimization, and Web Worker
+  data/         The editable catalog and generated precomputed search trees
+  styles/       Base, component, and responsive styles
+  ui/           Plain-DOM editor and page rendering
+tests/          Calculator, catalog, persistence, state, and UI regression tests
+```
 
+The executable code is intentionally split by responsibility. The two large search-tree JSON files are generated static data, not application logic.
 
-## Mode 2 (brute force)
-![input_boots2](https://user-images.githubusercontent.com/55171652/171547008-ef0c2ee9-9a3a-45ae-bb86-5868acc92515.png)
+## Adding items and enchantments
 
-### Search Result: (same boots in mode 1)
-![enchantments_order_boots2](https://user-images.githubusercontent.com/55171652/171384070-50b21551-9f24-4130-8702-e60ffe5137d8.png)
+All ordinary item and enchantment updates happen in [`src/data/catalog.json`](src/data/catalog.json). There is no second copy to paste into a JavaScript file.
 
+An enchantment entry has this shape:
 
+```json
+{
+  "id": 40,
+  "key": "wind_burst",
+  "label": "Wind Burst",
+  "maxLevel": 3,
+  "costs": {
+    "item": 4,
+    "book": 2
+  },
+  "conflicts": [],
+  "editions": ["java", "bedrock"]
+}
+```
 
+An item entry lists the IDs it accepts:
 
-## Mode 2 (search to match target)
-![input_boots3](https://user-images.githubusercontent.com/55171652/171547016-f7db6396-3acb-40d4-a75e-7dad835d38f4.png)
+```json
+{
+  "key": "mace",
+  "label": "Mace",
+  "enchantments": [10, 11, 13, 17, 26, 28, 38, 39, 40],
+  "editions": ["java", "bedrock"]
+}
+```
 
-### Search Result:
-![enchantments_order_boots3](https://user-images.githubusercontent.com/55171652/171384086-8d1c31ab-0ab4-4c32-9f24-ba22abdee885.png)
+When updating the catalog:
 
+1. Give every item and enchantment a unique key, and every enchantment a unique numeric ID.
+2. Add conflicts in both directions. If enchantment A conflicts with B, both entries must list the other ID.
+3. Add the enchantment ID to each applicable item's `enchantments` array.
+4. Use `"editions": ["java"]`, `["bedrock"]`, or both to control availability.
+5. Run `bun run test`. Catalog tests catch duplicate identifiers, broken references, asymmetric conflicts, invalid costs/levels, and missing edition support.
+
+Adding Minecraft content does not require regenerating the search-tree data. Those tables describe generic anvil tree shapes and depend only on input count and prior-work handling.
+
+## Saved workspace compatibility
+
+Current workspaces use a versioned payload containing the edition, mode, options, inputs, and output. The loader also accepts the original project's unversioned localStorage and PNG payloads. Because legacy payloads did not record an edition, they load as Bedrock by default and can then be switched in the UI.
+
+## How the search works
+
+An anvil sequence can be represented as a full binary tree:
+
+- Leaves are the input item and books.
+- Intermediate nodes are anvil operations.
+- The root is the final item.
+
+The right-side input contributes its enchantment cost at each operation, while the tree depth determines accumulated prior-work penalties. The project keeps precomputed candidate trees grouped by prior-work cost, then searches their valid input orderings for the lowest combined cost. Searches involving prior-work inputs use a separate reduced candidate table.
+
+The calculator engine is pure TypeScript. Edition-specific differences are passed explicitly into every calculation rather than being stored in a global flag. Advanced searches use the same engine inside a typed Web Worker.
+
+## Credits
+
+This repository is a modernization of the original open-source [Minecraft Enchantment Order Calculator](https://github.com/kkchengaf/Minecraft-Enchantment-Order-Calculator), including its search approach and precomputed tree data.

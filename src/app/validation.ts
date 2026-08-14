@@ -1,4 +1,5 @@
 import { catalog, enchantmentsForItem } from '../data/catalog';
+import { isLegacyConflict, PRIOR_WORK_COSTS } from '../calculator/rules';
 import type { CalculatorState, EnchantmentLevels } from '../types';
 
 export interface ValidationResult {
@@ -17,8 +18,27 @@ export const validateState = (state: CalculatorState): ValidationResult => {
     if (selectedCount(state.output.enchantments) < 2) {
       return { valid: false, message: 'Add at least two enchanted books.' };
     }
-    return { valid: true, message: '' };
+    if (selectedCount(state.output.enchantments) > 9) {
+      return { valid: false, message: 'Books mode supports up to nine enchantments.' };
+    }
   }
+
+  if (state.output.item) {
+    const validOutputIds = new Set(
+      enchantmentsForItem(state.output.item, state.edition).map(enchantment => enchantment.id),
+    );
+    for (const id of Object.keys(state.output.enchantments).map(Number)) {
+      if (!validOutputIds.has(id)) return { valid: false, message: 'The output contains an invalid enchantment.' };
+      const conflictingId = catalog.enchantmentById
+        .get(id)
+        ?.conflicts.find(conflict => state.output.enchantments[conflict]);
+      if (conflictingId !== undefined && (!state.allowLegacyConflicts || !isLegacyConflict(id, conflictingId))) {
+        return { valid: false, message: 'The output contains mutually exclusive enchantments.' };
+      }
+    }
+  }
+
+  if (state.mode === 'books') return { valid: true, message: '' };
 
   const inputs = state.inputs.filter(input => !input.bypassed);
   if (inputs.length < 3) return { valid: false, message: 'Add at least three active input items or books.' };
@@ -39,6 +59,9 @@ export const validateState = (state: CalculatorState): ValidationResult => {
   }
 
   for (const input of inputs) {
+    if (!PRIOR_WORK_COSTS.includes(input.priorWork as (typeof PRIOR_WORK_COSTS)[number])) {
+      return { valid: false, message: 'An input has an invalid prior work penalty.' };
+    }
     const validIds = new Set(enchantmentsForItem(input.item, state.edition).map(enchantment => enchantment.id));
     for (const id of Object.keys(input.enchantments).map(Number)) {
       if (!validIds.has(id)) return { valid: false, message: `An enchantment is not valid for ${input.item}.` };
