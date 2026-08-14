@@ -1,0 +1,5 @@
+dist/
+node_modules/
+src/data/search-trees.json
+src/data/prior-work-trees.json
+sample result/

@@ -1,0 +1,1102 @@
+{
+  "enchantments": [
+    {
+      "id": 0,
+      "key": "protection",
+      "label": "Protection",
+      "maxLevel": 4,
+      "costs": {
+        "item": 1,
+        "book": 1
+      },
+      "conflicts": [
+        1,
+        3,
+        4
+      ],
+      "editions": [
+        "java",
+        "bedrock"
+      ]
+    },
+    {
+      "id": 1,
+      "key": "fire_protection",
+      "label": "Fire Protection",
+      "maxLevel": 4,
+      "costs": {
+        "item": 2,
+        "book": 1
+      },
+      "conflicts": [
+        0,
+        3,
+        4
+      ],
+      "editions": [
+        "java",
+        "bedrock"
+      ]
+    },
+    {
+      "id": 2,
+      "key": "feather_falling",
+      "label": "Feather Falling",
+      "maxLevel": 4,
+      "costs": {
+        "item": 2,
+        "book": 1
+      },
+      "conflicts": [],
+      "editions": [
+        "java",
+        "bedrock"
+      ]
+    },
+    {
+      "id": 3,
+      "key": "blast_protection",
+      "label": "Blast Protection",
+      "maxLevel": 4,
+      "costs": {
+        "item": 4,
+        "book": 2
+      },
+      "conflicts": [
+        0,
+        1,
+        4
+      ],
+      "editions": [
+        "java",
+        "bedrock"
+      ]
+    },
+    {
+      "id": 4,
+      "key": "projectile_protection",
+      "label": "Projectile Protection",
+      "maxLevel": 4,
+      "costs": {
+        "item": 2,
+        "book": 1
+      },
+      "conflicts": [
+        0,
+        1,
+        3
+      ],
+      "editions": [
+        "java",
+        "bedrock"
+      ]
+    },
+    {
+      "id": 5,
+      "key": "thorns",
+      "label": "Thorns",
+      "maxLevel": 3,
+      "costs": {
+        "item": 8,
+        "book": 4
+      },
+      "conflicts": [],
+      "editions": [
+        "java",
+        "bedrock"
+      ]
+    },
+    {
+      "id": 6,
+      "key": "respiration",
+      "label": "Respiration",
+      "maxLevel": 3,
+      "costs": {
+        "item": 4,
+        "book": 2
+      },
+      "conflicts": [],
+      "editions": [
+        "java",
+        "bedrock"
+      ]
+    },
+    {
+      "id": 7,
+      "key": "depth_strider",
+      "label": "Depth Strider",
+      "maxLevel": 3,
+      "costs": {
+        "item": 4,
+        "book": 2
+      },
+      "conflicts": [
+        25
+      ],
+      "editions": [
+        "java",
+        "bedrock"
+      ]
+    },
+    {
+      "id": 8,
+      "key": "aqua_affinity",
+      "label": "Aqua Affinity",
+      "maxLevel": 1,
+      "costs": {
+        "item": 4,
+        "book": 2
+      },
+      "conflicts": [],
+      "editions": [
+        "java",
+        "bedrock"
+      ]
+    },
+    {
+      "id": 9,
+      "key": "sharpness",
+      "label": "Sharpness",
+      "maxLevel": 5,
+      "costs": {
+        "item": 1,
+        "book": 1
+      },
+      "conflicts": [
+        10,
+        11
+      ],
+      "editions": [
+        "java",
+        "bedrock"
+      ]
+    },
+    {
+      "id": 10,
+      "key": "smite",
+      "label": "Smite",
+      "maxLevel": 5,
+      "costs": {
+        "item": 2,
+        "book": 1
+      },
+      "conflicts": [
+        9,
+        11,
+        38,
+        39
+      ],
+      "editions": [
+        "java",
+        "bedrock"
+      ]
+    },
+    {
+      "id": 11,
+      "key": "bane_of_arthropods",
+      "label": "Bane Of Arthropods",
+      "maxLevel": 5,
+      "costs": {
+        "item": 2,
+        "book": 1
+      },
+      "conflicts": [
+        9,
+        10,
+        38,
+        39
+      ],
+      "editions": [
+        "java",
+        "bedrock"
+      ]
+    },
+    {
+      "id": 12,
+      "key": "knockback",
+      "label": "Knockback",
+      "maxLevel": 2,
+      "costs": {
+        "item": 2,
+        "book": 1
+      },
+      "conflicts": [],
+      "editions": [
+        "java",
+        "bedrock"
+      ]
+    },
+    {
+      "id": 13,
+      "key": "fire_aspect",
+      "label": "Fire Aspect",
+      "maxLevel": 2,
+      "costs": {
+        "item": 4,
+        "book": 2
+      },
+      "conflicts": [],
+      "editions": [
+        "java",
+        "bedrock"
+      ]
+    },
+    {
+      "id": 14,
+      "key": "looting",
+      "label": "Looting",
+      "maxLevel": 3,
+      "costs": {
+        "item": 4,
+        "book": 2
+      },
+      "conflicts": [],
+      "editions": [
+        "java",
+        "bedrock"
+      ]
+    },
+    {
+      "id": 15,
+      "key": "efficiency",
+      "label": "Efficiency",
+      "maxLevel": 5,
+      "costs": {
+        "item": 1,
+        "book": 1
+      },
+      "conflicts": [],
+      "editions": [
+        "java",
+        "bedrock"
+      ]
+    },
+    {
+      "id": 16,
+      "key": "silk_touch",
+      "label": "Silk Touch",
+      "maxLevel": 1,
+      "costs": {
+        "item": 8,
+        "book": 4
+      },
+      "conflicts": [
+        18
+      ],
+      "editions": [
+        "java",
+        "bedrock"
+      ]
+    },
+    {
+      "id": 17,
+      "key": "unbreaking",
+      "label": "Unbreaking",
+      "maxLevel": 3,
+      "costs": {
+        "item": 2,
+        "book": 1
+      },
+      "conflicts": [],
+      "editions": [
+        "java",
+        "bedrock"
+      ]
+    },
+    {
+      "id": 18,
+      "key": "fortune",
+      "label": "Fortune",
+      "maxLevel": 3,
+      "costs": {
+        "item": 4,
+        "book": 2
+      },
+      "conflicts": [
+        16
+      ],
+      "editions": [
+        "java",
+        "bedrock"
+      ]
+    },
+    {
+      "id": 19,
+      "key": "power",
+      "label": "Power",
+      "maxLevel": 5,
+      "costs": {
+        "item": 1,
+        "book": 1
+      },
+      "conflicts": [],
+      "editions": [
+        "java",
+        "bedrock"
+      ]
+    },
+    {
+      "id": 20,
+      "key": "punch",
+      "label": "Punch",
+      "maxLevel": 2,
+      "costs": {
+        "item": 4,
+        "book": 2
+      },
+      "conflicts": [],
+      "editions": [
+        "java",
+        "bedrock"
+      ]
+    },
+    {
+      "id": 21,
+      "key": "flame",
+      "label": "Flame",
+      "maxLevel": 1,
+      "costs": {
+        "item": 4,
+        "book": 2
+      },
+      "conflicts": [],
+      "editions": [
+        "java",
+        "bedrock"
+      ]
+    },
+    {
+      "id": 22,
+      "key": "infinity",
+      "label": "Infinity",
+      "maxLevel": 1,
+      "costs": {
+        "item": 8,
+        "book": 4
+      },
+      "conflicts": [
+        26
+      ],
+      "editions": [
+        "java",
+        "bedrock"
+      ]
+    },
+    {
+      "id": 23,
+      "key": "luck_of_the_sea",
+      "label": "Luck Of The Sea",
+      "maxLevel": 3,
+      "costs": {
+        "item": 4,
+        "book": 2
+      },
+      "conflicts": [],
+      "editions": [
+        "java",
+        "bedrock"
+      ]
+    },
+    {
+      "id": 24,
+      "key": "lure",
+      "label": "Lure",
+      "maxLevel": 3,
+      "costs": {
+        "item": 4,
+        "book": 2
+      },
+      "conflicts": [],
+      "editions": [
+        "java",
+        "bedrock"
+      ]
+    },
+    {
+      "id": 25,
+      "key": "frost_walker",
+      "label": "Frost Walker",
+      "maxLevel": 2,
+      "costs": {
+        "item": 4,
+        "book": 2
+      },
+      "conflicts": [
+        7
+      ],
+      "editions": [
+        "java",
+        "bedrock"
+      ]
+    },
+    {
+      "id": 26,
+      "key": "mending",
+      "label": "Mending",
+      "maxLevel": 1,
+      "costs": {
+        "item": 4,
+        "book": 2
+      },
+      "conflicts": [
+        22
+      ],
+      "editions": [
+        "java",
+        "bedrock"
+      ]
+    },
+    {
+      "id": 27,
+      "key": "curse_of_binding",
+      "label": "Curse Of Binding",
+      "maxLevel": 1,
+      "costs": {
+        "item": 8,
+        "book": 4
+      },
+      "conflicts": [],
+      "editions": [
+        "java",
+        "bedrock"
+      ]
+    },
+    {
+      "id": 28,
+      "key": "curse_of_vanishing",
+      "label": "Curse Of Vanishing",
+      "maxLevel": 1,
+      "costs": {
+        "item": 8,
+        "book": 4
+      },
+      "conflicts": [],
+      "editions": [
+        "java",
+        "bedrock"
+      ]
+    },
+    {
+      "id": 29,
+      "key": "impaling",
+      "label": "Impaling",
+      "maxLevel": 5,
+      "costs": {
+        "item": 4,
+        "book": 2
+      },
+      "conflicts": [],
+      "editions": [
+        "java",
+        "bedrock"
+      ]
+    },
+    {
+      "id": 30,
+      "key": "riptide",
+      "label": "Riptide",
+      "maxLevel": 3,
+      "costs": {
+        "item": 4,
+        "book": 2
+      },
+      "conflicts": [
+        31,
+        32
+      ],
+      "editions": [
+        "java",
+        "bedrock"
+      ]
+    },
+    {
+      "id": 31,
+      "key": "loyalty",
+      "label": "Loyalty",
+      "maxLevel": 3,
+      "costs": {
+        "item": 1,
+        "book": 1
+      },
+      "conflicts": [
+        30
+      ],
+      "editions": [
+        "java",
+        "bedrock"
+      ]
+    },
+    {
+      "id": 32,
+      "key": "channeling",
+      "label": "Channeling",
+      "maxLevel": 1,
+      "costs": {
+        "item": 8,
+        "book": 4
+      },
+      "conflicts": [
+        30
+      ],
+      "editions": [
+        "java",
+        "bedrock"
+      ]
+    },
+    {
+      "id": 33,
+      "key": "multishot",
+      "label": "Multishot",
+      "maxLevel": 1,
+      "costs": {
+        "item": 4,
+        "book": 2
+      },
+      "conflicts": [
+        34
+      ],
+      "editions": [
+        "java",
+        "bedrock"
+      ]
+    },
+    {
+      "id": 34,
+      "key": "piercing",
+      "label": "Piercing",
+      "maxLevel": 4,
+      "costs": {
+        "item": 1,
+        "book": 1
+      },
+      "conflicts": [
+        33
+      ],
+      "editions": [
+        "java",
+        "bedrock"
+      ]
+    },
+    {
+      "id": 35,
+      "key": "quick_charge",
+      "label": "Quick Charge",
+      "maxLevel": 3,
+      "costs": {
+        "item": 2,
+        "book": 1
+      },
+      "conflicts": [],
+      "editions": [
+        "java",
+        "bedrock"
+      ]
+    },
+    {
+      "id": 36,
+      "key": "soul_speed",
+      "label": "Soul Speed",
+      "maxLevel": 3,
+      "costs": {
+        "item": 8,
+        "book": 4
+      },
+      "conflicts": [],
+      "editions": [
+        "java",
+        "bedrock"
+      ]
+    },
+    {
+      "id": 37,
+      "key": "swift_sneak",
+      "label": "Swift Sneak",
+      "maxLevel": 3,
+      "costs": {
+        "item": 8,
+        "book": 4
+      },
+      "conflicts": [],
+      "editions": [
+        "java",
+        "bedrock"
+      ]
+    },
+    {
+      "id": 38,
+      "key": "breach",
+      "label": "Breach",
+      "maxLevel": 4,
+      "costs": {
+        "item": 4,
+        "book": 2
+      },
+      "conflicts": [
+        10,
+        11,
+        39
+      ],
+      "editions": [
+        "java",
+        "bedrock"
+      ]
+    },
+    {
+      "id": 39,
+      "key": "density",
+      "label": "Density",
+      "maxLevel": 5,
+      "costs": {
+        "item": 2,
+        "book": 1
+      },
+      "conflicts": [
+        10,
+        11,
+        38
+      ],
+      "editions": [
+        "java",
+        "bedrock"
+      ]
+    },
+    {
+      "id": 40,
+      "key": "wind_burst",
+      "label": "Wind Burst",
+      "maxLevel": 3,
+      "costs": {
+        "item": 4,
+        "book": 2
+      },
+      "conflicts": [],
+      "editions": [
+        "java",
+        "bedrock"
+      ]
+    },
+    {
+      "id": 1000,
+      "key": "sweeping_edge",
+      "label": "Sweeping Edge",
+      "maxLevel": 3,
+      "costs": {
+        "item": 4,
+        "book": 2
+      },
+      "conflicts": [],
+      "editions": [
+        "java"
+      ]
+    }
+  ],
+  "items": [
+    {
+      "key": "helmet",
+      "label": "Helmet",
+      "enchantments": [
+        0,
+        1,
+        3,
+        4,
+        5,
+        6,
+        8,
+        17,
+        26,
+        27,
+        28
+      ],
+      "editions": [
+        "java",
+        "bedrock"
+      ]
+    },
+    {
+      "key": "chestplate",
+      "label": "Chestplate",
+      "enchantments": [
+        0,
+        1,
+        3,
+        4,
+        5,
+        17,
+        26,
+        27,
+        28
+      ],
+      "editions": [
+        "java",
+        "bedrock"
+      ]
+    },
+    {
+      "key": "leggings",
+      "label": "Leggings",
+      "enchantments": [
+        0,
+        1,
+        3,
+        4,
+        5,
+        17,
+        26,
+        27,
+        28,
+        37
+      ],
+      "editions": [
+        "java",
+        "bedrock"
+      ]
+    },
+    {
+      "key": "boots",
+      "label": "Boots",
+      "enchantments": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        7,
+        17,
+        25,
+        26,
+        27,
+        28,
+        36
+      ],
+      "editions": [
+        "java",
+        "bedrock"
+      ]
+    },
+    {
+      "key": "turtle_shell",
+      "label": "Turtle Shell",
+      "enchantments": [
+        0,
+        1,
+        3,
+        4,
+        5,
+        6,
+        8,
+        17,
+        26,
+        27,
+        28
+      ],
+      "editions": [
+        "java",
+        "bedrock"
+      ]
+    },
+    {
+      "key": "sword",
+      "label": "Sword",
+      "enchantments": [
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        17,
+        26,
+        28,
+        1000
+      ],
+      "editions": [
+        "java",
+        "bedrock"
+      ]
+    },
+    {
+      "key": "axe",
+      "label": "Axe",
+      "enchantments": [
+        9,
+        10,
+        11,
+        15,
+        16,
+        17,
+        18,
+        26,
+        28
+      ],
+      "editions": [
+        "java",
+        "bedrock"
+      ]
+    },
+    {
+      "key": "pickaxe",
+      "label": "Pickaxe",
+      "enchantments": [
+        15,
+        16,
+        17,
+        18,
+        26,
+        28
+      ],
+      "editions": [
+        "java",
+        "bedrock"
+      ]
+    },
+    {
+      "key": "shovel",
+      "label": "Shovel",
+      "enchantments": [
+        15,
+        16,
+        17,
+        18,
+        26,
+        28
+      ],
+      "editions": [
+        "java",
+        "bedrock"
+      ]
+    },
+    {
+      "key": "hoe",
+      "label": "Hoe",
+      "enchantments": [
+        15,
+        16,
+        17,
+        18,
+        26,
+        28
+      ],
+      "editions": [
+        "java",
+        "bedrock"
+      ]
+    },
+    {
+      "key": "shears",
+      "label": "Shears",
+      "enchantments": [
+        15,
+        17,
+        26,
+        28
+      ],
+      "editions": [
+        "java",
+        "bedrock"
+      ]
+    },
+    {
+      "key": "fishing_rod",
+      "label": "Fishing Rod",
+      "enchantments": [
+        17,
+        23,
+        24,
+        26,
+        28
+      ],
+      "editions": [
+        "java",
+        "bedrock"
+      ]
+    },
+    {
+      "key": "bow",
+      "label": "Bow",
+      "enchantments": [
+        17,
+        19,
+        20,
+        21,
+        22,
+        26,
+        28
+      ],
+      "editions": [
+        "java",
+        "bedrock"
+      ]
+    },
+    {
+      "key": "flint_and_steel",
+      "label": "Flint And Steel",
+      "enchantments": [
+        17,
+        26,
+        28
+      ],
+      "editions": [
+        "java",
+        "bedrock"
+      ]
+    },
+    {
+      "key": "carrot_on_a_stick",
+      "label": "Carrot On A Stick",
+      "enchantments": [
+        17,
+        26,
+        28
+      ],
+      "editions": [
+        "java",
+        "bedrock"
+      ]
+    },
+    {
+      "key": "warped_fungus_on_a_stick",
+      "label": "Warped Fungus On A Stick",
+      "enchantments": [
+        17,
+        26,
+        28
+      ],
+      "editions": [
+        "java",
+        "bedrock"
+      ]
+    },
+    {
+      "key": "shield",
+      "label": "Shield",
+      "enchantments": [
+        17,
+        26,
+        28
+      ],
+      "editions": [
+        "java",
+        "bedrock"
+      ]
+    },
+    {
+      "key": "elytra",
+      "label": "Elytra",
+      "enchantments": [
+        17,
+        26,
+        27,
+        28
+      ],
+      "editions": [
+        "java",
+        "bedrock"
+      ]
+    },
+    {
+      "key": "trident",
+      "label": "Trident",
+      "enchantments": [
+        17,
+        26,
+        28,
+        29,
+        30,
+        31,
+        32
+      ],
+      "editions": [
+        "java",
+        "bedrock"
+      ]
+    },
+    {
+      "key": "crossbow",
+      "label": "Crossbow",
+      "enchantments": [
+        17,
+        26,
+        28,
+        33,
+        34,
+        35
+      ],
+      "editions": [
+        "java",
+        "bedrock"
+      ]
+    },
+    {
+      "key": "mace",
+      "label": "Mace",
+      "enchantments": [
+        10,
+        11,
+        13,
+        17,
+        26,
+        28,
+        38,
+        39,
+        40
+      ],
+      "editions": [
+        "java",
+        "bedrock"
+      ]
+    },
+    {
+      "key": "enchanted_book",
+      "label": "Enchanted Book",
+      "enchantments": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,
+        33,
+        34,
+        35,
+        36,
+        37,
+        38,
+        39,
+        40,
+        1000
+      ],
+      "editions": [
+        "java",
+        "bedrock"
+      ]
+    }
+  ]
+}
