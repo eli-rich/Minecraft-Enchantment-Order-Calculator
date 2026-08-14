@@ -10,6 +10,7 @@ The search uses precomputed binary-tree structures to avoid evaluating every pos
 - A fast mode for one clean item plus individual enchanted books
 - An advanced mode for combining existing enchanted items and books
 - Prior work penalties and optional output conditions
+- Identical-book quantities for cases such as combining four level-I books into level III
 - Optional legacy God Armor and Infinity/Mending combinations
 - Step-by-step results with enchantment and prior-work cost breakdowns
 - Result PNG downloads that can be dropped back onto the page to restore a workspace

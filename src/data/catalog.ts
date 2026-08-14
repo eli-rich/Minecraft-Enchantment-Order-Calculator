@@ -17,7 +17,9 @@ export const catalog: Catalog = {
 };
 
 export const enchantmentsForEdition = (edition: Edition) =>
-  catalog.enchantments.filter(enchantment => enchantment.editions.includes(edition));
+  catalog.enchantments
+    .filter(enchantment => enchantment.editions.includes(edition))
+    .sort((left, right) => left.label.localeCompare(right.label));
 
 export const itemsForEdition = (edition: Edition) => catalog.items.filter(item => item.editions.includes(edition));
 
@@ -27,7 +29,8 @@ export const enchantmentsForItem = (itemKey: string, edition: Edition) => {
 
   return item.enchantments
     .map(id => catalog.enchantmentById.get(id))
-    .filter((enchantment): enchantment is EnchantmentDefinition => Boolean(enchantment?.editions.includes(edition)));
+    .filter((enchantment): enchantment is EnchantmentDefinition => Boolean(enchantment?.editions.includes(edition)))
+    .sort((left, right) => left.label.localeCompare(right.label));
 };
 
 export const formatItemLabel = (itemKey: string) => catalog.itemByKey.get(itemKey)?.label ?? itemKey;

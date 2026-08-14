@@ -1,6 +1,7 @@
 import type { SearchResult } from '../calculator/types';
-import { catalog, enchantmentsForItem } from '../data/catalog';
-import type { CalculatorState, Edition, EnchantmentLevels, SearchMode } from '../types';
+import { catalog } from '../data/catalog';
+import type { Edition, SearchMode } from '../types';
+import { applyBaseItemConstraints, levelsForItem } from './constraints';
 import { createResultImage, downloadBlob } from './image';
 import { readStateFromPng } from './persistence';
 import { buildDisplayResult } from './results';
@@ -9,17 +10,13 @@ import { createDefaultState, createInput, loadState, removeUnsupportedEnchantmen
 import { validateState } from './validation';
 import { renderApp, type ViewState } from '../ui/render';
 
-const levelsForItem = (levels: EnchantmentLevels, itemKey: string, edition: Edition) => {
-  const validIds = new Set(enchantmentsForItem(itemKey, edition).map(enchantment => enchantment.id));
-  return Object.fromEntries(Object.entries(levels).filter(([id]) => validIds.has(Number(id))));
-};
-
 export class CalculatorApp {
   private state = loadState();
   private view: ViewState = { status: '', statusKind: 'idle', result: null, searching: false };
   private readonly searchService = new SearchService();
 
   constructor(private readonly root: HTMLElement) {
+    applyBaseItemConstraints(this.state);
     root.addEventListener('click', event => this.handleClick(event));
     root.addEventListener('change', event => this.handleChange(event));
     document.body.addEventListener('dragover', event => {
@@ -69,12 +66,14 @@ export class CalculatorApp {
       this.commit('Input added.');
     } else if (action === 'remove-input') {
       this.state.inputs = this.state.inputs.filter(input => input.id !== target.dataset.inputId);
+      applyBaseItemConstraints(this.state);
       this.commit('Input removed.');
     } else if (action === 'duplicate-input') {
       const input = this.inputById(target.dataset.inputId);
       if (!input) return;
       const duplicate = createInput(input.item);
       duplicate.enchantments = { ...input.enchantments };
+      duplicate.quantity = input.quantity;
       duplicate.priorWork = input.priorWork;
       const index = this.state.inputs.indexOf(input);
       this.state.inputs.splice(index + 1, 0, duplicate);
@@ -111,6 +110,7 @@ export class CalculatorApp {
       const edition = target.value as Edition;
       const removed = removeUnsupportedEnchantments(this.state, edition);
       this.state.edition = edition;
+      applyBaseItemConstraints(this.state);
       this.commit(
         removed > 0
           ? `${removed} unsupported enchantment${removed === 1 ? ' was' : 's were'} removed.`
@@ -118,6 +118,7 @@ export class CalculatorApp {
       );
     } else if (action === 'set-mode') {
       this.state.mode = target.value as SearchMode;
+      if (this.state.mode === 'advanced') applyBaseItemConstraints(this.state);
       this.commit(`${this.state.mode === 'books' ? 'Single books' : 'Advanced'} mode selected.`);
     } else if (action === 'toggle-legacy-conflicts') {
       this.state.allowLegacyConflicts = (target as HTMLInputElement).checked;
@@ -125,17 +126,15 @@ export class CalculatorApp {
     } else if (action === 'set-input-item') {
       const input = this.inputById(target.dataset.inputId);
       if (!input) return;
-      const baseInput = this.state.inputs.find(candidate => candidate.item !== 'enchanted_book');
       input.item = target.value;
-      input.enchantments = levelsForItem(input.enchantments, input.item, this.state.edition);
-      if (baseInput?.id === input.id && input.item !== 'enchanted_book') {
-        for (const candidate of this.state.inputs) {
-          if (candidate.id === input.id || candidate.item === 'enchanted_book') continue;
-          candidate.item = input.item;
-          candidate.enchantments = levelsForItem(candidate.enchantments, candidate.item, this.state.edition);
-        }
-      }
+      if (input.item !== 'enchanted_book') input.quantity = 1;
+      applyBaseItemConstraints(this.state);
       this.commit();
+    } else if (action === 'set-input-quantity') {
+      const input = this.inputById(target.dataset.inputId);
+      if (!input || input.item !== 'enchanted_book') return;
+      input.quantity = Number(target.value);
+      this.commit(`${input.quantity} identical book${input.quantity === 1 ? '' : 's'} selected.`);
     } else if (action === 'set-prior-work') {
       const input = this.inputById(target.dataset.inputId);
       if (!input) return;
@@ -221,6 +220,7 @@ export class CalculatorApp {
   private async importPng(file: File) {
     try {
       this.state = await readStateFromPng(file);
+      applyBaseItemConstraints(this.state);
       saveState(this.state);
       this.view = { status: 'Workspace restored from PNG.', statusKind: 'success', result: null, searching: false };
       this.render();

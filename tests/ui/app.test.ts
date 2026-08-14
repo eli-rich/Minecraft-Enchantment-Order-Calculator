@@ -37,6 +37,35 @@ describe('calculator UI', () => {
     expect(Array.from(inputs[1]!.options).map(option => option.value)).toEqual(['sword', 'enchanted_book']);
   });
 
+  it('locks the output and book enchantments to the base item', () => {
+    change(document.querySelector<HTMLInputElement>('input[name="mode"][value="advanced"]')!);
+    change(document.querySelector<HTMLSelectElement>('[data-action="set-input-item"]')!, 'helmet');
+    document.querySelector<HTMLButtonElement>('[data-action="add-input"]')?.click();
+
+    const output = document.querySelector<HTMLSelectElement>('[data-action="set-output-item"]')!;
+    expect(output.value).toBe('helmet');
+    expect(output.disabled).toBe(true);
+
+    const bookEditor = document.querySelectorAll<HTMLSelectElement>('[data-action="add-enchantment"]')[1]!;
+    const labels = Array.from(bookEditor.options).map(option => option.textContent);
+    expect(labels).toContain('Respiration');
+    expect(labels).not.toContain('Sharpness');
+  });
+
+  it('sorts enchantments alphabetically', () => {
+    const editor = document.querySelector<HTMLSelectElement>('[data-action="add-enchantment"]')!;
+    const labels = Array.from(editor.options)
+      .slice(1)
+      .map(option => option.textContent ?? '');
+    expect(labels).toEqual([...labels].sort((left, right) => left.localeCompare(right)));
+  });
+
+  it('sets a quantity for identical enchanted books', () => {
+    change(document.querySelector<HTMLInputElement>('input[name="mode"][value="advanced"]')!);
+    change(document.querySelector<HTMLSelectElement>('[data-action="set-input-quantity"]')!, '4');
+    expect(document.querySelector('.input-card h3')?.textContent).toContain('× 4');
+  });
+
   it('places the add-input control after the input cards', () => {
     change(document.querySelector<HTMLInputElement>('input[name="mode"][value="advanced"]')!);
     const list = document.querySelector('.input-list')!;

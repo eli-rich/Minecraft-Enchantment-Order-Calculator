@@ -1,6 +1,7 @@
 import { catalog, enchantmentsForItem } from '../data/catalog';
 import { isLegacyConflict, PRIOR_WORK_COSTS } from '../calculator/rules';
 import type { CalculatorState, EnchantmentLevels } from '../types';
+import { effectiveItemForEnchantments, expandedInputCount, getBaseInput } from './constraints';
 
 export interface ValidationResult {
   valid: boolean;
@@ -41,8 +42,9 @@ export const validateState = (state: CalculatorState): ValidationResult => {
   if (state.mode === 'books') return { valid: true, message: '' };
 
   const inputs = state.inputs.filter(input => !input.bypassed);
-  if (inputs.length < 3) return { valid: false, message: 'Add at least three active input items or books.' };
-  if (inputs.length > (inputs.some(input => input.priorWork > 0) ? 8 : 10)) {
+  const inputCount = expandedInputCount(state);
+  if (inputCount < 3) return { valid: false, message: 'Add at least three active input items or books.' };
+  if (inputCount > (inputs.some(input => input.priorWork > 0) ? 8 : 10)) {
     return { valid: false, message: 'This search has too many inputs for the available search tables.' };
   }
 
@@ -50,7 +52,7 @@ export const validateState = (state: CalculatorState): ValidationResult => {
   if (physicalItems.length === 0) {
     return { valid: false, message: 'Advanced searches need at least one non-book item.' };
   }
-  const itemKey = physicalItems[0]?.item;
+  const itemKey = getBaseInput(state)?.item;
   if (physicalItems.some(input => input.item !== itemKey)) {
     return { valid: false, message: 'All non-book inputs must be the same item type.' };
   }
@@ -59,10 +61,14 @@ export const validateState = (state: CalculatorState): ValidationResult => {
   }
 
   for (const input of inputs) {
+    if (!Number.isInteger(input.quantity) || input.quantity < 1 || input.quantity > 10) {
+      return { valid: false, message: 'Book quantity must be between 1 and 10.' };
+    }
     if (!PRIOR_WORK_COSTS.includes(input.priorWork as (typeof PRIOR_WORK_COSTS)[number])) {
       return { valid: false, message: 'An input has an invalid prior work penalty.' };
     }
-    const validIds = new Set(enchantmentsForItem(input.item, state.edition).map(enchantment => enchantment.id));
+    const effectiveItem = effectiveItemForEnchantments(state, input);
+    const validIds = new Set(enchantmentsForItem(effectiveItem, state.edition).map(enchantment => enchantment.id));
     for (const id of Object.keys(input.enchantments).map(Number)) {
       if (!validIds.has(id)) return { valid: false, message: `An enchantment is not valid for ${input.item}.` };
       const definition = catalog.enchantmentById.get(id);

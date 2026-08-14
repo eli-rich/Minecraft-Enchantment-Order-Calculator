@@ -33,6 +33,7 @@ export interface InputItem {
   id: string;
   item: string;
   enchantments: EnchantmentLevels;
+  quantity: number;
   priorWork: number;
   bypassed: boolean;
 }

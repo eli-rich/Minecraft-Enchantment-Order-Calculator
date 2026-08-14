@@ -13,6 +13,7 @@ export const createInput = (item = 'enchanted_book'): InputItem => ({
   id: createId(),
   item,
   enchantments: {},
+  quantity: 1,
   priorWork: 0,
   bypassed: false,
 });
@@ -47,6 +48,10 @@ const normalizeInput = (value: unknown): InputItem | null => {
       input.enchantments && typeof input.enchantments === 'object'
         ? numericEnchantments(input.enchantments as Record<string, unknown>)
         : numericEnchantments(input),
+    quantity:
+      item === 'enchanted_book' && Number.isInteger(Number(input.quantity))
+        ? Math.min(10, Math.max(1, Number(input.quantity)))
+        : 1,
     priorWork: Number(input.priorWork ?? input.prior ?? 0),
     bypassed: Boolean(input.bypassed ?? input.bypass),
   };

@@ -1,4 +1,5 @@
 import { enchantmentsForItem, itemsForEdition } from '../data/catalog';
+import { effectiveItemForEnchantments, getBaseInput } from '../app/constraints';
 import type { CalculatorState, Edition, EnchantmentLevels, InputItem } from '../types';
 import { checked, escapeHtml, selected } from './html';
 
@@ -23,9 +24,8 @@ export const renderEnchantmentEditor = (options: EnchantmentEditorOptions) => {
   if (!options.itemKey) return '<p class="empty-hint">Choose an item to add target enchantments.</p>';
   const available = enchantmentsForItem(options.itemKey, options.edition);
   const selectedIds = Object.keys(options.levels).map(Number);
-  const rows = selectedIds
-    .map(id => available.find(enchantment => enchantment.id === id))
-    .filter(enchantment => enchantment !== undefined)
+  const rows = available
+    .filter(enchantment => selectedIds.includes(enchantment.id))
     .map(
       enchantment => `
         <div class="enchantment-row">
@@ -84,7 +84,7 @@ const itemOptions = (state: CalculatorState, current: string, includeBlank = fal
 };
 
 const inputItemOptions = (state: CalculatorState, input: InputItem) => {
-  const baseInput = state.inputs.find(candidate => candidate.item !== 'enchanted_book');
+  const baseInput = getBaseInput(state);
   if (!baseInput || baseInput.id === input.id) return itemOptions(state, input.item);
 
   const allowedKeys = new Set([baseInput.item, 'enchanted_book']);
@@ -99,7 +99,7 @@ export const renderInputCard = (state: CalculatorState, input: InputItem, index:
     <header class="card-header">
       <div>
         <span class="eyebrow">Input ${index + 1}</span>
-        <h3>${escapeHtml(itemsForEdition(state.edition).find(item => item.key === input.item)?.label ?? 'Item')}</h3>
+        <h3>${escapeHtml(itemsForEdition(state.edition).find(item => item.key === input.item)?.label ?? 'Item')}${input.quantity > 1 ? ` × ${input.quantity}` : ''}</h3>
       </div>
       <div class="card-actions">
         <button class="text-button" type="button" data-action="duplicate-input" data-input-id="${escapeHtml(input.id)}">Duplicate</button>
@@ -124,10 +124,25 @@ export const renderInputCard = (state: CalculatorState, input: InputItem, index:
             .join('')}
         </select>
       </label>
+      ${
+        input.item === 'enchanted_book'
+          ? `<label>
+              <span>Identical book copies</span>
+              <select data-action="set-input-quantity" data-input-id="${escapeHtml(input.id)}">
+                ${Array.from({ length: 10 }, (_, offset) => offset + 1)
+                  .map(
+                    quantity =>
+                      `<option value="${quantity}"${selected(input.quantity === quantity)}>${quantity}</option>`,
+                  )
+                  .join('')}
+              </select>
+            </label>`
+          : ''
+      }
     </div>
     ${renderEnchantmentEditor({
       levels: input.enchantments,
-      itemKey: input.item,
+      itemKey: effectiveItemForEnchantments(state, input),
       edition: state.edition,
       scope: 'input',
       inputId: input.id,
@@ -142,11 +157,13 @@ export const renderOutputCard = (state: CalculatorState) => `
         <h2>${state.mode === 'books' ? 'What are you making?' : 'Output condition'}</h2>
       </div>
     </div>
+    ${state.mode === 'advanced' ? '<p class="output-help">Compatible enchantments already on input items are carried forward automatically. Add conditions only for minimum levels the result must reach.</p>' : ''}
     <label>
       <span>Item</span>
-      <select data-action="set-output-item">
+      <select data-action="set-output-item"${state.mode === 'advanced' && getBaseInput(state) ? ' disabled' : ''}>
         ${itemOptions(state, state.output.item, state.mode === 'advanced')}
       </select>
+      ${state.mode === 'advanced' && getBaseInput(state) ? '<small class="field-note">Locked to the base input item.</small>' : ''}
     </label>
     ${renderEnchantmentEditor({
       levels: state.output.enchantments,

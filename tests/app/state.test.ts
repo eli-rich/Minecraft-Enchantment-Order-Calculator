@@ -23,6 +23,7 @@ describe('calculator state', () => {
     expect(state.version).toBe(2);
     expect(state.mode).toBe('advanced');
     expect(state.inputs[0]).toMatchObject({ item: 'sword', enchantments: { 9: 3 }, priorWork: 1 });
+    expect(state.inputs[0]?.quantity).toBe(1);
     expect(state.output).toEqual({ item: 'sword', enchantments: { 9: 4 } });
   });
 

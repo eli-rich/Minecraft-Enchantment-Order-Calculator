@@ -47,6 +47,13 @@ const searchBooks = (state: CalculatorState): SearchResult => {
   };
 };
 
+export const buildAdvancedSearchItems = (state: CalculatorState) =>
+  state.inputs
+    .filter(input => !input.bypassed)
+    .flatMap(input =>
+      Array.from({ length: input.item === 'enchanted_book' ? input.quantity : 1 }, () => toSearchItem(state, input)),
+    );
+
 export class SearchService {
   private worker: Worker | null = null;
 
@@ -59,7 +66,7 @@ export class SearchService {
     this.cancel();
     if (state.mode === 'books') return searchBooks(state);
 
-    const items = state.inputs.filter(input => !input.bypassed).map(input => toSearchItem(state, input));
+    const items = buildAdvancedSearchItems(state);
     const goal = Object.keys(state.output.enchantments).length > 0 ? state.output.enchantments : undefined;
 
     return new Promise<SearchResult>((resolve, reject) => {
