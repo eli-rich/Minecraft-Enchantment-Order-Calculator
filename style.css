@@ -232,7 +232,7 @@
       line-height: 34px;
     }
 
-    .enchantment:hover,  {
+    .enchantment:hover {
       background-color: var(--color-theme1);
     }
 
