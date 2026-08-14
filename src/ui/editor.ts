@@ -1,4 +1,4 @@
-import { enchantmentsForItem, itemsForEdition } from '../data/catalog';
+import { enchantmentsForItem, ITEM_CATEGORIES, itemsForEdition } from '../data/catalog';
 import { effectiveItemForEnchantments, getBaseInput } from '../app/constraints';
 import type { CalculatorState, Edition, EnchantmentLevels, InputItem } from '../types';
 import { checked, escapeHtml, selected } from './html';
@@ -76,22 +76,30 @@ export const renderEnchantmentEditor = (options: EnchantmentEditorOptions) => {
     </div>`;
 };
 
-const itemOptions = (state: CalculatorState, current: string, includeBlank = false) => {
-  const items = itemsForEdition(state.edition);
-  return `${includeBlank ? `<option value=""${selected(current === '')}>Any matching item</option>` : ''}${items
-    .map(item => `<option value="${item.key}"${selected(item.key === current)}>${escapeHtml(item.label)}</option>`)
-    .join('')}`;
-};
+const groupedItemOptions = (items: ReturnType<typeof itemsForEdition>, current: string) =>
+  ITEM_CATEGORIES.map(category => {
+    const options = items
+      .filter(item => item.category === category.key)
+      .map(item => `<option value="${item.key}"${selected(item.key === current)}>${escapeHtml(item.label)}</option>`)
+      .join('');
+    return options ? `<optgroup label="${category.label}">${options}</optgroup>` : '';
+  }).join('');
+
+const itemOptions = (state: CalculatorState, current: string, includeBlank = false) =>
+  `${includeBlank ? `<option value=""${selected(current === '')}>Any matching item</option>` : ''}${groupedItemOptions(
+    itemsForEdition(state.edition),
+    current,
+  )}`;
 
 const inputItemOptions = (state: CalculatorState, input: InputItem) => {
   const baseInput = getBaseInput(state);
   if (!baseInput || baseInput.id === input.id) return itemOptions(state, input.item);
 
   const allowedKeys = new Set([baseInput.item, 'enchanted_book']);
-  return itemsForEdition(state.edition)
-    .filter(item => allowedKeys.has(item.key))
-    .map(item => `<option value="${item.key}"${selected(item.key === input.item)}>${escapeHtml(item.label)}</option>`)
-    .join('');
+  return groupedItemOptions(
+    itemsForEdition(state.edition).filter(item => allowedKeys.has(item.key)),
+    input.item,
+  );
 };
 
 export const renderInputCard = (state: CalculatorState, input: InputItem, index: number) => `

@@ -68,6 +68,23 @@ describe('calculator UI', () => {
     expect(labels).toEqual([...labels].sort((left, right) => left.localeCompare(right)));
   });
 
+  it('groups input and output items by category and alphabetizes each group', () => {
+    change(document.querySelector<HTMLInputElement>('input[name="mode"][value="advanced"]')!);
+    const selectors = [
+      document.querySelector<HTMLSelectElement>('[data-action="set-input-item"]')!,
+      document.querySelector<HTMLSelectElement>('[data-action="set-output-item"]')!,
+    ];
+
+    for (const selector of selectors) {
+      const groups = Array.from(selector.querySelectorAll('optgroup'));
+      expect(groups.map(group => group.label)).toEqual(['Armor', 'Weapons', 'Tools', 'Utility', 'Books']);
+      for (const group of groups) {
+        const labels = Array.from(group.querySelectorAll('option')).map(option => option.textContent ?? '');
+        expect(labels).toEqual([...labels].sort((left, right) => left.localeCompare(right)));
+      }
+    }
+  });
+
   it('sets a quantity for identical enchanted books', () => {
     change(document.querySelector<HTMLInputElement>('input[name="mode"][value="advanced"]')!);
     change(document.querySelector<HTMLSelectElement>('[data-action="set-input-quantity"]')!, '4');

@@ -1,5 +1,15 @@
 import rawCatalog from './catalog.json';
-import type { CatalogData, Edition, EnchantmentDefinition, ItemDefinition } from '../types';
+import type { CatalogData, Edition, EnchantmentDefinition, ItemCategory, ItemDefinition } from '../types';
+
+export const ITEM_CATEGORIES: ReadonlyArray<{ key: ItemCategory; label: string }> = [
+  { key: 'armor', label: 'Armor' },
+  { key: 'weapon', label: 'Weapons' },
+  { key: 'tool', label: 'Tools' },
+  { key: 'utility', label: 'Utility' },
+  { key: 'book', label: 'Books' },
+];
+
+const itemCategoryIndex = new Map(ITEM_CATEGORIES.map((category, index) => [category.key, index]));
 
 export interface Catalog {
   enchantments: EnchantmentDefinition[];
@@ -21,7 +31,14 @@ export const enchantmentsForEdition = (edition: Edition) =>
     .filter(enchantment => enchantment.editions.includes(edition))
     .sort((left, right) => left.label.localeCompare(right.label));
 
-export const itemsForEdition = (edition: Edition) => catalog.items.filter(item => item.editions.includes(edition));
+export const itemsForEdition = (edition: Edition) =>
+  catalog.items
+    .filter(item => item.editions.includes(edition))
+    .sort(
+      (left, right) =>
+        (itemCategoryIndex.get(left.category) ?? ITEM_CATEGORIES.length) -
+          (itemCategoryIndex.get(right.category) ?? ITEM_CATEGORIES.length) || left.label.localeCompare(right.label),
+    );
 
 export const enchantmentsForItem = (itemKey: string, edition: Edition) => {
   const item = catalog.itemByKey.get(itemKey);

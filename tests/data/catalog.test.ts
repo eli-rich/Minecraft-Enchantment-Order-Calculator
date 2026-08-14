@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { catalog } from '../../src/data/catalog';
+import { catalog, ITEM_CATEGORIES, itemsForEdition } from '../../src/data/catalog';
 
 describe('catalog', () => {
   it('has unique enchantment IDs and keys', () => {
@@ -11,6 +11,18 @@ describe('catalog', () => {
     expect(new Set(catalog.items.map(item => item.key)).size).toBe(catalog.items.length);
     for (const item of catalog.items) {
       expect(item.enchantments.every(id => catalog.enchantmentById.has(id))).toBe(true);
+    }
+  });
+
+  it('assigns every item to a supported category and sorts within categories', () => {
+    const categoryKeys = ITEM_CATEGORIES.map(category => category.key);
+    for (const item of catalog.items) expect(categoryKeys).toContain(item.category);
+
+    for (const category of ITEM_CATEGORIES) {
+      const labels = itemsForEdition('java')
+        .filter(item => item.category === category.key)
+        .map(item => item.label);
+      expect(labels).toEqual([...labels].sort((left, right) => left.localeCompare(right)));
     }
   });
 

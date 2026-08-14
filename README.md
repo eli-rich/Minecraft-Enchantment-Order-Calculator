@@ -80,6 +80,7 @@ An item entry lists the IDs it accepts:
 {
   "key": "mace",
   "label": "Mace",
+  "category": "weapon",
   "enchantments": [10, 11, 13, 17, 26, 28, 38, 39, 40],
   "editions": ["java", "bedrock"]
 }
@@ -90,8 +91,9 @@ When updating the catalog:
 1. Give every item and enchantment a unique key, and every enchantment a unique numeric ID.
 2. Add conflicts in both directions. If enchantment A conflicts with B, both entries must list the other ID.
 3. Add the enchantment ID to each applicable item's `enchantments` array.
-4. Use `"editions": ["java"]`, `["bedrock"]`, or both to control availability.
-5. Run `bun run test`. Catalog tests catch duplicate identifiers, broken references, asymmetric conflicts, invalid costs/levels, and missing edition support.
+4. Assign each item an `armor`, `weapon`, `tool`, `utility`, or `book` category. Selectors display categories in that order and sort items alphabetically within them.
+5. Use `"editions": ["java"]`, `["bedrock"]`, or both to control availability.
+6. Run `bun run test`. Catalog tests catch duplicate identifiers, broken references, asymmetric conflicts, invalid costs/levels, and missing edition support.
 
 Adding Minecraft content does not require regenerating the search-tree data. Those tables describe generic anvil tree shapes and depend only on input count and prior-work handling.
 
@@ -113,4 +115,8 @@ The calculator engine is pure TypeScript. Edition-specific differences are passe
 
 ## Credits
 
-This repository is a modernization of the original open-source [Minecraft Enchantment Order Calculator](https://github.com/kkchengaf/Minecraft-Enchantment-Order-Calculator), including its search approach and precomputed tree data.
+This repository is a modernization of the original [Minecraft Enchantment Order Calculator](https://github.com/kkchengaf/Minecraft-Enchantment-Order-Calculator), including its search approach and precomputed tree data.
+
+## License
+
+Original modifications and additions made for this fork are available under the [MIT License](LICENSE). The license does not cover code, data, or other material inherited from the original repository, which did not include a license.

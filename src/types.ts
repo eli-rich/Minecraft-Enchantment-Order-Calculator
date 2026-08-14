@@ -2,6 +2,8 @@ export type Edition = 'java' | 'bedrock';
 
 export type SearchMode = 'books' | 'advanced';
 
+export type ItemCategory = 'armor' | 'weapon' | 'tool' | 'utility' | 'book';
+
 export interface EnchantmentDefinition {
   id: number;
   key: string;
@@ -18,6 +20,7 @@ export interface EnchantmentDefinition {
 export interface ItemDefinition {
   key: string;
   label: string;
+  category: ItemCategory;
   enchantments: number[];
   editions: Edition[];
 }
