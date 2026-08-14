@@ -117,12 +117,13 @@ export const renderInputCard = (state: CalculatorState, input: InputItem, index:
         </select>
       </label>
       <label>
-        <span>Prior work penalty</span>
+        <span>Prior work penalty (PWP)</span>
         <select data-action="set-prior-work" data-input-id="${escapeHtml(input.id)}">
           ${[0, 1, 3, 7, 15, 31, 63, 127]
             .map(cost => `<option value="${cost}"${selected(input.priorWork === cost)}>${cost}</option>`)
             .join('')}
         </select>
+        <small class="field-note">PWP = the anvil cost to rename this item − 1.</small>
       </label>
       ${
         input.item === 'enchanted_book'

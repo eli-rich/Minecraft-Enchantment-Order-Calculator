@@ -74,6 +74,13 @@ describe('calculator UI', () => {
     expect(document.querySelector('.input-card h3')?.textContent).toContain('× 4');
   });
 
+  it('explains how to determine prior work penalty', () => {
+    change(document.querySelector<HTMLInputElement>('input[name="mode"][value="advanced"]')!);
+    const priorWork = document.querySelector('[data-action="set-prior-work"]')?.closest('label');
+    expect(priorWork?.textContent).toContain('Prior work penalty (PWP)');
+    expect(priorWork?.textContent).toContain('anvil cost to rename this item − 1');
+  });
+
   it('places the add-input control after the input cards', () => {
     change(document.querySelector<HTMLInputElement>('input[name="mode"][value="advanced"]')!);
     const list = document.querySelector('.input-list')!;
