@@ -5,9 +5,12 @@ import {
   enchantmentIds,
   type AnvilComponent,
 } from './anvil';
+import { SearchHeuristics } from './search-heuristics';
 import type { SearchItem, SearchOptions, SearchPlanNode, SearchProgress, SearchResult, TreeStructure } from './types';
 
 const MAXIMUM_EXPLORED_STATES = 500_000;
+const FAST_SEARCH_STATES = 5_000;
+const FAST_HEURISTIC_WEIGHT = 1.4;
 const PROGRESS_INTERVAL = 1_000;
 
 interface IndexedComponent extends AnvilComponent {
@@ -37,6 +40,7 @@ interface QueueEntry {
   key: string;
   entries: StateEntry[];
   totalCost: number;
+  estimatedCost: number;
   sequence: number;
 }
 
@@ -79,7 +83,13 @@ class MinHeap {
   }
 
   private precedes(left: QueueEntry, right: QueueEntry) {
-    return left.totalCost < right.totalCost || (left.totalCost === right.totalCost && left.sequence < right.sequence);
+    return (
+      left.estimatedCost < right.estimatedCost ||
+      (left.estimatedCost === right.estimatedCost && left.totalCost > right.totalCost) ||
+      (left.estimatedCost === right.estimatedCost &&
+        left.totalCost === right.totalCost &&
+        left.sequence < right.sequence)
+    );
   }
 }
 
@@ -91,6 +101,9 @@ const componentSignature = (component: AnvilComponent) =>
   ]);
 
 const stateKey = (entries: StateEntry[]) => JSON.stringify(entries.map(entry => [entry.signature, entry.count]));
+
+const countedComponents = (entries: StateEntry[], componentBySignature: Map<string, IndexedComponent>) =>
+  entries.map(entry => ({ component: componentBySignature.get(entry.signature)!, count: entry.count }));
 
 const initialEntries = (components: IndexedComponent[]) => {
   const counts = new Map<string, number>();
@@ -171,7 +184,16 @@ const reportProgress = (options: SearchOptions, exploredStates: number, queuedSt
   options.onProgress?.(progress);
 };
 
-export const searchAdvanced = (items: SearchItem[], options: SearchOptions): SearchResult => {
+const runSearch = (
+  items: SearchItem[],
+  options: SearchOptions,
+  heuristicWeight: number,
+  maximumExploredStates: number,
+  exactSearch: boolean,
+  minimumPriorWorkOnly: boolean,
+  heuristics: SearchHeuristics,
+  incumbent?: SearchResult,
+): SearchResult | null => {
   if (items.length < 2) throw new Error('Search requires at least two input items.');
 
   const componentBySignature = new Map<string, IndexedComponent>();
@@ -188,31 +210,56 @@ export const searchAdvanced = (items: SearchItem[], options: SearchOptions): Sea
   const queue = new MinHeap();
   let sequence = 0;
   let exploredStates = 0;
-  queue.push({ key: initialKey, entries, totalCost: 0, sequence: sequence++ });
+  let fastResult: SearchResult | null = null;
+  queue.push({
+    key: initialKey,
+    entries,
+    totalCost: 0,
+    estimatedCost:
+      heuristics.remainingCost(countedComponents(entries, componentBySignature), options.goal, options.edition) *
+      heuristicWeight,
+    sequence: sequence++,
+  });
 
   while (queue.size > 0) {
     const state = queue.pop()!;
     const best = bestStates.get(state.key);
     if (!best || state.totalCost !== best.totalCost || finalized.has(state.key)) continue;
+    if (exactSearch && incumbent && state.estimatedCost >= incumbent.enchantmentCost + incumbent.priorWorkCost) {
+      return { ...incumbent, exploredStates: exploredStates + (incumbent.exploredStates ?? 0) };
+    }
     finalized.add(state.key);
     exploredStates += 1;
-    if (exploredStates > MAXIMUM_EXPLORED_STATES) {
+    if (exploredStates > maximumExploredStates) {
+      if (!exactSearch) return fastResult;
       throw new Error('This search is too complex to finish safely in the browser. Try bypassing optional inputs.');
     }
-    reportProgress(options, exploredStates, queue.size);
+    if (exactSearch) reportProgress(options, exploredStates, queue.size);
 
     if (state.entries.length === 1 && state.entries[0]?.count === 1) {
       const component = componentBySignature.get(state.entries[0].signature)!;
       if (!component.enchant.item || !componentSatisfiesGoal(component, options.goal)) continue;
       const plan = reconstructPlan(items, initialComponents, state.key, bestStates);
-      return {
+      const result: SearchResult = {
         orderedItems: planItems(plan),
         structure: planStructure(plan),
         enchantmentCost: best.enchantmentCost,
         priorWorkCost: best.priorWorkCost,
         exploredStates,
       };
+      if (exactSearch || heuristicWeight === 1) return result;
+      if (
+        !fastResult ||
+        result.enchantmentCost + result.priorWorkCost < fastResult.enchantmentCost + fastResult.priorWorkCost
+      ) {
+        fastResult = result;
+      }
+      continue;
     }
+
+    const currentPriorWorkLowerBound = minimumPriorWorkOnly
+      ? heuristics.remainingPriorWorkCost(countedComponents(state.entries, componentBySignature))
+      : 0;
 
     for (let targetIndex = 0; targetIndex < state.entries.length; targetIndex += 1) {
       const targetEntry = state.entries[targetIndex]!;
@@ -240,6 +287,19 @@ export const searchAdvanced = (items: SearchItem[], options: SearchOptions): Sea
         const known = bestStates.get(nextKey);
         if (known && known.totalCost <= totalCost) continue;
 
+        const nextComponents = countedComponents(nextEntries, componentBySignature);
+        if (
+          minimumPriorWorkOnly &&
+          combination.priorWorkCost + heuristics.remainingPriorWorkCost(nextComponents) !== currentPriorWorkLowerBound
+        ) {
+          continue;
+        }
+        if (!heuristics.canStillReachGoal(nextComponents, options.goal)) continue;
+        const lowerBound = heuristics.remainingCost(nextComponents, options.goal, options.edition);
+        if (exactSearch && incumbent && totalCost + lowerBound >= incumbent.enchantmentCost + incumbent.priorWorkCost) {
+          continue;
+        }
+
         bestStates.set(nextKey, {
           totalCost,
           enchantmentCost: best.enchantmentCost + combination.enchantmentCost,
@@ -251,10 +311,24 @@ export const searchAdvanced = (items: SearchItem[], options: SearchOptions): Sea
             resultSignature,
           },
         });
-        queue.push({ key: nextKey, entries: nextEntries, totalCost, sequence: sequence++ });
+        queue.push({
+          key: nextKey,
+          entries: nextEntries,
+          totalCost,
+          estimatedCost: totalCost + lowerBound * heuristicWeight,
+          sequence: sequence++,
+        });
       }
     }
   }
 
+  return incumbent ?? fastResult;
+};
+
+export const searchAdvanced = (items: SearchItem[], options: SearchOptions): SearchResult => {
+  const heuristics = new SearchHeuristics();
+  const incumbent = runSearch(items, options, FAST_HEURISTIC_WEIGHT, FAST_SEARCH_STATES, false, true, heuristics);
+  const result = runSearch(items, options, 1, MAXIMUM_EXPLORED_STATES, true, false, heuristics, incumbent ?? undefined);
+  if (result) return result;
   throw new Error('No survival-valid combination satisfies the requested output.');
 };

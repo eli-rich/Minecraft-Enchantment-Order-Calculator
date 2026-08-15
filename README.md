@@ -2,7 +2,7 @@
 
 A browser-based calculator for finding the least-expensive order for combining Minecraft items and enchanted books in an anvil. It supports both **Bedrock Edition** and **Java Edition** rules and runs entirely in the browser.
 
-The optimizer searches canonical multisets of items with Dijkstra's algorithm. Identical books share one state entry with a quantity, and searches run in a Web Worker so the page remains responsive.
+The optimizer searches canonical multisets of items with A*. Identical books share one state entry with a quantity, and searches run in a Web Worker so the page remains responsive.
 
 ## Features
 
@@ -11,6 +11,8 @@ The optimizer searches canonical multisets of items with Dijkstra's algorithm. I
 - An advanced mode for combining existing enchanted items and books
 - Prior work penalties and automatically derived advanced outputs
 - Identical-book quantities for cases such as combining four level-I books into level III
+- Progressive item-compatibility and conflict filtering across active inputs
+- Temporarily excluded inputs for quick what-if comparisons
 - Optional legacy God Armor and Infinity/Mending combinations
 - Step-by-step results with enchantment and prior-work cost breakdowns
 - Result PNG downloads that can be dropped back onto the page to restore a workspace
@@ -105,7 +107,7 @@ Current workspaces use a versioned payload containing the edition, mode, options
 
 Each search state is a multiset of the remaining items and books. A legal ordered pair represents one anvil operation: the first component is the target, the second is the sacrifice, and their result replaces both. Components are canonically identified by their item, enchantments, levels, and prior-work count, so interchangeable copies are represented by a quantity instead of separate permutations.
 
-Dijkstra's algorithm explores these transitions in total-level-cost order. Because every operation has a nonnegative cost, the first valid one-item state removed from the priority queue is optimal. Backpointers reconstruct that path as a binary tree for the step-by-step result display.
+A\* explores these transitions in estimated total-level-cost order. Its lower bound combines unavoidable remaining prior work with relaxed per-enchantment consolidation costs. States that can no longer reach the derived levels are discarded immediately, and a fast prior-work-optimal pass supplies an incumbent for exact branch-and-bound. Because the estimate never exceeds the true remaining cost, the final result remains optimal. Backpointers reconstruct that path as a binary tree for the step-by-step result display.
 
 The shared anvil function enforces item direction, applicability, conflicts, edition-specific enchantment costs, both prior-work penalties, result work count, and the 39-level survival limit for each operation. In advanced mode, the output item and highest reachable enchantment levels are derived from the active inputs and used as the search goal. Every active input must still be consumed into the final item; bypassed inputs are excluded from both the goal and the search.
 
