@@ -58,4 +58,17 @@ describe('calculator search regression fixtures', () => {
     const result = searchAdvanced(items, { edition, allowLegacyConflicts: false });
     expect(result.enchantmentCost).toBe(enchantmentCost);
   });
+
+  it.each([
+    ['java', 12],
+    ['bedrock', 8],
+  ] as const)('optimally combines four identical Protection I books in %s', (edition, expectedTotal) => {
+    const protectionBook: SearchItem = { cost: 1, enchant: { 0: 1 } };
+    const result = searchAdvanced(
+      [{ cost: 0, enchant: { item: 'boots' } }, protectionBook, protectionBook, protectionBook, protectionBook],
+      { edition, allowLegacyConflicts: false },
+    );
+
+    expect(result.enchantmentCost + result.priorWorkCost).toBe(expectedTotal);
+  });
 });
