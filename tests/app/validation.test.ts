@@ -62,4 +62,19 @@ describe('workspace validation', () => {
       message: `A search can contain at most ${MAXIMUM_SEARCH_INPUTS} inputs.`,
     });
   });
+
+  it('flags mutually exclusive enchantments across advanced inputs as an ambiguous output', () => {
+    const state = createDefaultState();
+    state.mode = 'advanced';
+    const boots = createInput('boots');
+    boots.enchantments = { 7: 3 };
+    const frostWalker = createInput();
+    frostWalker.enchantments = { 25: 2 };
+    state.inputs = [boots, frostWalker, createInput()];
+
+    expect(validateState(state)).toMatchObject({
+      valid: false,
+      message: expect.stringContaining('mutually exclusive'),
+    });
+  });
 });

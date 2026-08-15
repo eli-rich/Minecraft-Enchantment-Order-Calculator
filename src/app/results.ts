@@ -2,6 +2,7 @@ import { catalog, formatItemLabel } from '../data/catalog';
 import { TreeEvaluator } from '../calculator/tree';
 import type { NodeValue, ResultNode, SearchResult } from '../calculator/types';
 import type { CalculatorState } from '../types';
+import { deriveAdvancedOutput } from './constraints';
 
 export interface ResultStep {
   number: number;
@@ -52,9 +53,10 @@ export const describeNode = (node: ResultNode) => {
 };
 
 export const buildDisplayResult = (search: SearchResult, state: CalculatorState, elapsedMs: number): DisplayResult => {
+  const goal = state.mode === 'advanced' ? deriveAdvancedOutput(state).enchantments : state.output.enchantments;
   const evaluated = new TreeEvaluator(search.structure, state.edition, state.allowLegacyConflicts).evaluate(
     search.orderedItems,
-    state.output.enchantments,
+    goal,
   );
   const steps: ResultStep[] = [];
 

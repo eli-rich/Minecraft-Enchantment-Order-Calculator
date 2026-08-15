@@ -8,6 +8,7 @@ import type {
   WorkerSearchResponse,
 } from '../calculator/types';
 import type { CalculatorState } from '../types';
+import { deriveAdvancedOutput } from './constraints';
 
 const toSearchItem = (item: CalculatorState['inputs'][number]): SearchItem => {
   const source = item.item === 'enchanted_book' ? 'book' : 'item';
@@ -43,7 +44,7 @@ export class SearchService {
   async search(state: CalculatorState, onProgress: (message: string) => void) {
     this.cancel();
     const items = state.mode === 'books' ? buildBooksSearchItems(state) : buildAdvancedSearchItems(state);
-    const goal = state.output.enchantments;
+    const goal = state.mode === 'advanced' ? deriveAdvancedOutput(state).enchantments : state.output.enchantments;
     const options: SearchOptions = {
       edition: state.edition,
       allowLegacyConflicts: state.allowLegacyConflicts,

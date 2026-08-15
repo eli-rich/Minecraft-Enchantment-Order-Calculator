@@ -1,5 +1,5 @@
-import { enchantmentsForItem, ITEM_CATEGORIES, itemsForEdition } from '../data/catalog';
-import { effectiveItemForEnchantments, getBaseInput } from '../app/constraints';
+import { enchantmentsForItem, formatItemLabel, ITEM_CATEGORIES, itemsForEdition } from '../data/catalog';
+import { deriveAdvancedOutput, effectiveItemForEnchantments, getBaseInput } from '../app/constraints';
 import { MAXIMUM_BOOK_QUANTITY } from '../app/limits';
 import type { CalculatorState, Edition, EnchantmentLevels, InputItem } from '../types';
 import { checked, escapeHtml, selected } from './html';
@@ -159,28 +159,63 @@ export const renderInputCard = (state: CalculatorState, input: InputItem, index:
     })}
   </article>`;
 
+const renderDerivedOutput = (state: CalculatorState) => {
+  const output = deriveAdvancedOutput(state);
+  if (!output.item) {
+    return '<p class="empty-hint">Add a non-book input to derive the final item and enchantments.</p>';
+  }
+
+  const enchantments = enchantmentsForItem(output.item, state.edition).filter(
+    enchantment => output.enchantments[enchantment.id] !== undefined,
+  );
+
+  return `
+    <div class="derived-output-item">
+      <span>Item</span>
+      <strong>${escapeHtml(formatItemLabel(output.item))}</strong>
+    </div>
+    <div class="derived-enchantments">
+      <span class="derived-label">Enchantments</span>
+      ${
+        enchantments.length > 0
+          ? enchantments
+              .map(
+                enchantment => `<div class="derived-enchantment-row">
+                  <span>${escapeHtml(enchantment.label)}</span>
+                  <strong>Level ${output.enchantments[enchantment.id]}</strong>
+                </div>`,
+              )
+              .join('')
+          : '<p class="empty-hint">No enchantments on active inputs yet.</p>'
+      }
+    </div>`;
+};
+
 export const renderOutputCard = (state: CalculatorState) => `
   <section class="panel output-panel">
     <div class="section-heading">
       <div>
-        <span class="eyebrow">${state.mode === 'books' ? 'Final item' : 'Optional target'}</span>
-        <h2>${state.mode === 'books' ? 'What are you making?' : 'Output condition'}</h2>
+        <span class="eyebrow">Final item</span>
+        <h2>${state.mode === 'books' ? 'What are you making?' : 'Derived output'}</h2>
       </div>
     </div>
-    ${state.mode === 'advanced' ? '<p class="output-help">Compatible enchantments already on input items are carried forward automatically. Add conditions only for minimum levels the result must reach.</p>' : ''}
-    <label>
-      <span>Item</span>
-      <select data-action="set-output-item"${state.mode === 'advanced' && getBaseInput(state) ? ' disabled' : ''}>
-        ${itemOptions(state, state.output.item, state.mode === 'advanced')}
-      </select>
-      ${state.mode === 'advanced' && getBaseInput(state) ? '<small class="field-note">Locked to the base input item.</small>' : ''}
-    </label>
-    ${renderEnchantmentEditor({
-      levels: state.output.enchantments,
-      itemKey: state.output.item,
-      edition: state.edition,
-      scope: 'output',
-    })}
+    ${
+      state.mode === 'advanced'
+        ? `<p class="output-help">Calculated automatically from active inputs. Matching lower-level enchantments are combined to the highest reachable level.</p>
+           ${renderDerivedOutput(state)}`
+        : `<label>
+            <span>Item</span>
+            <select data-action="set-output-item">
+              ${itemOptions(state, state.output.item)}
+            </select>
+          </label>
+          ${renderEnchantmentEditor({
+            levels: state.output.enchantments,
+            itemKey: state.output.item,
+            edition: state.edition,
+            scope: 'output',
+          })}`
+    }
   </section>`;
 
 export const renderLegacyOption = (state: CalculatorState) => `

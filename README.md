@@ -9,7 +9,7 @@ The optimizer searches canonical multisets of items with Dijkstra's algorithm. I
 - Bedrock and Java rules, with Bedrock selected by default
 - A simple mode for one clean item plus individual enchanted books
 - An advanced mode for combining existing enchanted items and books
-- Prior work penalties and optional output conditions
+- Prior work penalties and automatically derived advanced outputs
 - Identical-book quantities for cases such as combining four level-I books into level III
 - Optional legacy God Armor and Infinity/Mending combinations
 - Step-by-step results with enchantment and prior-work cost breakdowns
@@ -107,7 +107,7 @@ Each search state is a multiset of the remaining items and books. A legal ordere
 
 Dijkstra's algorithm explores these transitions in total-level-cost order. Because every operation has a nonnegative cost, the first valid one-item state removed from the priority queue is optimal. Backpointers reconstruct that path as a binary tree for the step-by-step result display.
 
-The shared anvil function enforces item direction, applicability, conflicts, edition-specific enchantment costs, both prior-work penalties, result work count, and the 39-level survival limit for each operation. Advanced output enchantments act as a minimum goal; every active input must still be consumed into the final item.
+The shared anvil function enforces item direction, applicability, conflicts, edition-specific enchantment costs, both prior-work penalties, result work count, and the 39-level survival limit for each operation. In advanced mode, the output item and highest reachable enchantment levels are derived from the active inputs and used as the search goal. Every active input must still be consumed into the final item; bypassed inputs are excluded from both the goal and the search.
 
 The calculator engine is pure TypeScript. Edition-specific differences are passed explicitly into every calculation rather than being stored in a global flag. Both modes use the same engine inside a typed Web Worker. Searches accept up to 25 expanded inputs and stop with a useful error if a highly varied search exceeds the browser's state budget.
 

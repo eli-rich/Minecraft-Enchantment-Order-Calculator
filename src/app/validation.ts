@@ -1,7 +1,7 @@
 import { catalog, enchantmentsForItem } from '../data/catalog';
 import { isLegacyConflict, PRIOR_WORK_COSTS } from '../calculator/rules';
 import type { CalculatorState, EnchantmentLevels } from '../types';
-import { effectiveItemForEnchantments, expandedInputCount, getBaseInput } from './constraints';
+import { deriveAdvancedOutput, effectiveItemForEnchantments, expandedInputCount, getBaseInput } from './constraints';
 import { MAXIMUM_BOOK_QUANTITY, MAXIMUM_SEARCH_INPUTS } from './limits';
 
 export { MAXIMUM_SEARCH_INPUTS } from './limits';
@@ -14,30 +14,34 @@ export interface ValidationResult {
 const selectedCount = (levels: EnchantmentLevels) => Object.values(levels).filter(level => level > 0).length;
 
 export const validateState = (state: CalculatorState): ValidationResult => {
-  if (!state.output.item && state.mode === 'books') {
+  const output = state.mode === 'advanced' ? deriveAdvancedOutput(state) : state.output;
+
+  if (!output.item && state.mode === 'books') {
     return { valid: false, message: 'Choose the item you want to enchant.' };
   }
 
   if (state.mode === 'books') {
-    if (selectedCount(state.output.enchantments) < 2) {
+    if (selectedCount(output.enchantments) < 2) {
       return { valid: false, message: 'Add at least two enchanted books.' };
     }
-    if (selectedCount(state.output.enchantments) + 1 > MAXIMUM_SEARCH_INPUTS) {
+    if (selectedCount(output.enchantments) + 1 > MAXIMUM_SEARCH_INPUTS) {
       return { valid: false, message: `A search can contain at most ${MAXIMUM_SEARCH_INPUTS} inputs.` };
     }
   }
 
-  if (state.output.item) {
-    const validOutputIds = new Set(
-      enchantmentsForItem(state.output.item, state.edition).map(enchantment => enchantment.id),
-    );
-    for (const id of Object.keys(state.output.enchantments).map(Number)) {
+  if (output.item) {
+    const validOutputIds = new Set(enchantmentsForItem(output.item, state.edition).map(enchantment => enchantment.id));
+    for (const id of Object.keys(output.enchantments).map(Number)) {
       if (!validOutputIds.has(id)) return { valid: false, message: 'The output contains an invalid enchantment.' };
-      const conflictingId = catalog.enchantmentById
-        .get(id)
-        ?.conflicts.find(conflict => state.output.enchantments[conflict]);
+      const conflictingId = catalog.enchantmentById.get(id)?.conflicts.find(conflict => output.enchantments[conflict]);
       if (conflictingId !== undefined && (!state.allowLegacyConflicts || !isLegacyConflict(id, conflictingId))) {
-        return { valid: false, message: 'The output contains mutually exclusive enchantments.' };
+        return {
+          valid: false,
+          message:
+            state.mode === 'advanced'
+              ? 'Active inputs contain mutually exclusive enchantments. Bypass or remove one of them.'
+              : 'The output contains mutually exclusive enchantments.',
+        };
       }
     }
   }
@@ -59,7 +63,7 @@ export const validateState = (state: CalculatorState): ValidationResult => {
   if (physicalItems.some(input => input.item !== itemKey)) {
     return { valid: false, message: 'All non-book inputs must be the same item type.' };
   }
-  if (state.output.item && state.output.item !== itemKey) {
+  if (output.item && output.item !== itemKey) {
     return { valid: false, message: 'The output item must match the non-book input items.' };
   }
 

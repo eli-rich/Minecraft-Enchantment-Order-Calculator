@@ -34,6 +34,7 @@ export class CalculatorApp {
 
   private commit(message = '') {
     this.searchService.cancel();
+    if (this.state.mode === 'advanced') applyBaseItemConstraints(this.state);
     saveState(this.state);
     this.view.result = null;
     this.view.searching = false;

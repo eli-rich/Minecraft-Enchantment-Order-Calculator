@@ -45,19 +45,43 @@ describe('calculator UI', () => {
     expect(Array.from(inputs[1]!.options).map(option => option.value)).toEqual(['sword', 'enchanted_book']);
   });
 
-  it('locks the output and book enchantments to the base item', () => {
+  it('derives a read-only output and limits book enchantments to the base item', () => {
     change(document.querySelector<HTMLInputElement>('input[name="mode"][value="advanced"]')!);
     change(document.querySelector<HTMLSelectElement>('[data-action="set-input-item"]')!, 'helmet');
     document.querySelector<HTMLButtonElement>('[data-action="add-input"]')?.click();
 
-    const output = document.querySelector<HTMLSelectElement>('[data-action="set-output-item"]')!;
-    expect(output.value).toBe('helmet');
-    expect(output.disabled).toBe(true);
+    expect(document.querySelector('[data-action="set-output-item"]')).toBeNull();
+    expect(document.querySelector('.derived-output-item strong')?.textContent).toBe('Helmet');
 
     const bookEditor = document.querySelectorAll<HTMLSelectElement>('[data-action="add-enchantment"]')[1]!;
     const labels = Array.from(bookEditor.options).map(option => option.textContent);
     expect(labels).toContain('Respiration');
     expect(labels).not.toContain('Sharpness');
+  });
+
+  it('updates the derived output to the highest reachable enchantment level', () => {
+    change(document.querySelector<HTMLInputElement>('input[name="mode"][value="advanced"]')!);
+    change(document.querySelector<HTMLSelectElement>('[data-action="set-input-item"]')!, 'helmet');
+    document.querySelector<HTMLButtonElement>('[data-action="add-input"]')?.click();
+
+    const secondCard = document.querySelectorAll<HTMLElement>('.input-card')[1]!;
+    change(secondCard.querySelector<HTMLSelectElement>('[data-action="add-enchantment"]')!, '6');
+    const updatedCard = document.querySelectorAll<HTMLElement>('.input-card')[1]!;
+    change(updatedCard.querySelector<HTMLSelectElement>('[data-action="set-enchantment-level"]')!, '1');
+    const finalCard = document.querySelectorAll<HTMLElement>('.input-card')[1]!;
+    change(finalCard.querySelector<HTMLSelectElement>('[data-action="set-input-quantity"]')!, '4');
+
+    expect(document.querySelector('.derived-enchantments')?.textContent).toContain('Respiration');
+    expect(document.querySelector('.derived-enchantments')?.textContent).toContain('Level 3');
+  });
+
+  it('preserves the editable books output while visiting advanced mode', () => {
+    change(document.querySelector<HTMLSelectElement>('[data-action="add-enchantment"]')!, '2');
+    change(document.querySelector<HTMLInputElement>('input[name="mode"][value="advanced"]')!);
+    change(document.querySelector<HTMLInputElement>('input[name="mode"][value="books"]')!);
+
+    expect(document.querySelector<HTMLSelectElement>('[data-action="set-output-item"]')?.value).toBe('boots');
+    expect(document.querySelector('.output-panel')?.textContent).toContain('Feather Falling');
   });
 
   it('sorts enchantments alphabetically', () => {
@@ -70,10 +94,9 @@ describe('calculator UI', () => {
 
   it('groups input and output items by category and alphabetizes each group', () => {
     change(document.querySelector<HTMLInputElement>('input[name="mode"][value="advanced"]')!);
-    const selectors = [
-      document.querySelector<HTMLSelectElement>('[data-action="set-input-item"]')!,
-      document.querySelector<HTMLSelectElement>('[data-action="set-output-item"]')!,
-    ];
+    const selectors = [document.querySelector<HTMLSelectElement>('[data-action="set-input-item"]')!];
+    change(document.querySelector<HTMLInputElement>('input[name="mode"][value="books"]')!);
+    selectors.push(document.querySelector<HTMLSelectElement>('[data-action="set-output-item"]')!);
 
     for (const selector of selectors) {
       const groups = Array.from(selector.querySelectorAll('optgroup'));

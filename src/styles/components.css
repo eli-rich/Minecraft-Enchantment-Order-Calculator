@@ -265,6 +265,36 @@
     font-size: 0.84rem;
   }
 
+  .derived-output-item,
+  .derived-enchantment-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    min-height: 42px;
+    padding: 0.65rem 0.75rem;
+    background: var(--surface-2);
+    border-radius: 3px;
+  }
+
+  .derived-output-item span,
+  .derived-label {
+    color: var(--muted);
+    font-size: 0.78rem;
+  }
+
+  .derived-enchantments {
+    display: grid;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--line);
+  }
+
+  .derived-enchantment-row strong {
+    white-space: nowrap;
+  }
+
   label:not(.segmented-control label, .toggle-row, .file-button, .add-enchantment) {
     display: grid;
   }
