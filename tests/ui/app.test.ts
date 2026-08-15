@@ -87,7 +87,9 @@ describe('calculator UI', () => {
 
   it('sets a quantity for identical enchanted books', () => {
     change(document.querySelector<HTMLInputElement>('input[name="mode"][value="advanced"]')!);
-    change(document.querySelector<HTMLSelectElement>('[data-action="set-input-quantity"]')!, '4');
+    const quantity = document.querySelector<HTMLSelectElement>('[data-action="set-input-quantity"]')!;
+    expect(quantity.options.item(quantity.options.length - 1)?.value).toBe('24');
+    change(quantity, '4');
     expect(document.querySelector('.input-card h3')?.textContent).toContain('× 4');
   });
 

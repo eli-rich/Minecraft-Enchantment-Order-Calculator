@@ -1,57 +1,35 @@
-import { getEditionMultiplier, getEnchantmentCost } from '../calculator/rules';
-import { searchFast } from '../calculator/search';
+import { searchAdvanced } from '../calculator/search';
 import type {
   SearchEnchantments,
   SearchItem,
+  SearchOptions,
   SearchResult,
   WorkerSearchRequest,
   WorkerSearchResponse,
 } from '../calculator/types';
 import type { CalculatorState } from '../types';
 
-const toSearchItem = (state: CalculatorState, item: CalculatorState['inputs'][number]): SearchItem => {
+const toSearchItem = (item: CalculatorState['inputs'][number]): SearchItem => {
   const source = item.item === 'enchanted_book' ? 'book' : 'item';
-  const cost = Object.entries(item.enchantments).reduce(
-    (sum, [id, level]) =>
-      sum + getEnchantmentCost(Number(id), source) * level * getEditionMultiplier(state.edition, Number(id)),
-    0,
-  );
   const enchant: SearchEnchantments = { ...item.enchantments };
   if (source === 'item') enchant.item = item.item;
   if (item.priorWork > 0) enchant.prior = item.priorWork;
-  return { cost, enchant };
+  return { cost: 0, enchant };
 };
 
-const searchBooks = (state: CalculatorState): SearchResult => {
-  const books = Object.entries(state.output.enchantments).map(([id, level]) => {
-    const enchantmentId = Number(id);
-    const cost = getEnchantmentCost(enchantmentId, 'book') * level * getEditionMultiplier(state.edition, enchantmentId);
-    return { cost, enchant: { [enchantmentId]: level } } satisfies SearchItem;
-  });
-  const fast = searchFast([0, ...books.map(book => book.cost)]);
-  const pool = [...books];
-  const orderedItems: SearchItem[] = [{ cost: 0, enchant: { item: state.output.item } }];
-
-  for (const weight of fast.orderedWeights.slice(1)) {
-    const index = pool.findIndex(book => book.cost === weight);
-    const book = pool.splice(index, 1)[0];
-    if (!book) throw new Error('Unable to map the optimized books back to their enchantments.');
-    orderedItems.push(book);
-  }
-
-  return {
-    orderedItems,
-    structure: fast.structure,
-    priorWorkCost: fast.priorWorkCost,
-    enchantmentCost: fast.enchantmentCost,
-  };
-};
+const buildBooksSearchItems = (state: CalculatorState): SearchItem[] => [
+  { cost: 0, enchant: { item: state.output.item } },
+  ...Object.entries(state.output.enchantments).map(([id, level]) => ({
+    cost: 0,
+    enchant: { [Number(id)]: level },
+  })),
+];
 
 export const buildAdvancedSearchItems = (state: CalculatorState) =>
   state.inputs
     .filter(input => !input.bypassed)
     .flatMap(input =>
-      Array.from({ length: input.item === 'enchanted_book' ? input.quantity : 1 }, () => toSearchItem(state, input)),
+      Array.from({ length: input.item === 'enchanted_book' ? input.quantity : 1 }, () => toSearchItem(input)),
     );
 
 export class SearchService {
@@ -64,27 +42,38 @@ export class SearchService {
 
   async search(state: CalculatorState, onProgress: (message: string) => void) {
     this.cancel();
-    if (state.mode === 'books') return searchBooks(state);
+    const items = state.mode === 'books' ? buildBooksSearchItems(state) : buildAdvancedSearchItems(state);
+    const goal = state.output.enchantments;
+    const options: SearchOptions = {
+      edition: state.edition,
+      allowLegacyConflicts: state.allowLegacyConflicts,
+      goal,
+    };
 
-    const items = buildAdvancedSearchItems(state);
-    const goal = Object.keys(state.output.enchantments).length > 0 ? state.output.enchantments : undefined;
+    if (typeof Worker === 'undefined') {
+      return searchAdvanced(items, {
+        ...options,
+        onProgress: progress =>
+          onProgress(
+            `Explored ${progress.exploredStates.toLocaleString()} states (${progress.queuedStates.toLocaleString()} queued)…`,
+          ),
+      });
+    }
 
     return new Promise<SearchResult>((resolve, reject) => {
       this.worker = new Worker(new URL('../calculator/worker.ts', import.meta.url), { type: 'module' });
       const request: WorkerSearchRequest = {
         type: 'search',
         items,
-        options: {
-          edition: state.edition,
-          allowLegacyConflicts: state.allowLegacyConflicts,
-          ...(goal ? { goal } : {}),
-        },
+        options,
       };
 
       this.worker.addEventListener('message', (event: MessageEvent<WorkerSearchResponse>) => {
         const message = event.data;
         if (message.type === 'progress') {
-          onProgress(`Searching group ${message.current} of ${message.total} (${message.candidates} trees)…`);
+          onProgress(
+            `Explored ${message.exploredStates.toLocaleString()} states (${message.queuedStates.toLocaleString()} queued)…`,
+          );
         } else if (message.type === 'result') {
           this.cancel();
           resolve(message.result);

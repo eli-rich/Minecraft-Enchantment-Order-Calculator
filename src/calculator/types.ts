@@ -2,14 +2,6 @@ import type { Edition, EnchantmentLevels } from '../types';
 
 export type TreeStructure = number | [TreeStructure] | [TreeStructure, TreeStructure];
 
-export interface TreeCandidate {
-  flat: number[];
-  sort: number[];
-  strc: TreeStructure;
-}
-
-export type SearchTreeTable = Record<string, Record<string, TreeCandidate[]>>;
-
 export interface SearchEnchantments {
   [key: string]: number | string | undefined;
   item?: string;
@@ -26,20 +18,22 @@ export interface SearchResult {
   structure: TreeStructure;
   priorWorkCost: number;
   enchantmentCost: number;
+  exploredStates?: number;
 }
 
-export interface FastSearchResult {
-  orderedWeights: number[];
-  structure: TreeStructure;
-  priorWorkCost: number;
-  enchantmentCost: number;
+export type SearchPlanNode =
+  { kind: 'leaf'; item: SearchItem } | { kind: 'combine'; left: SearchPlanNode; right: SearchPlanNode };
+
+export interface SearchProgress {
+  exploredStates: number;
+  queuedStates: number;
 }
 
 export interface SearchOptions {
   edition: Edition;
   allowLegacyConflicts: boolean;
   goal?: EnchantmentLevels;
-  onProgress?: (current: number, total: number, candidates: number) => void;
+  onProgress?: (progress: SearchProgress) => void;
 }
 
 export interface NodeValue {
@@ -69,6 +63,6 @@ export interface WorkerSearchRequest {
 }
 
 export type WorkerSearchResponse =
-  | { type: 'progress'; current: number; total: number; candidates: number }
+  | ({ type: 'progress' } & SearchProgress)
   | { type: 'result'; result: SearchResult }
   | { type: 'error'; message: string };

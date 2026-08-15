@@ -1,5 +1,6 @@
 import { enchantmentsForItem, ITEM_CATEGORIES, itemsForEdition } from '../data/catalog';
 import { effectiveItemForEnchantments, getBaseInput } from '../app/constraints';
+import { MAXIMUM_BOOK_QUANTITY } from '../app/limits';
 import type { CalculatorState, Edition, EnchantmentLevels, InputItem } from '../types';
 import { checked, escapeHtml, selected } from './html';
 
@@ -138,7 +139,7 @@ export const renderInputCard = (state: CalculatorState, input: InputItem, index:
           ? `<label>
               <span>Identical book copies</span>
               <select data-action="set-input-quantity" data-input-id="${escapeHtml(input.id)}">
-                ${Array.from({ length: 10 }, (_, offset) => offset + 1)
+                ${Array.from({ length: MAXIMUM_BOOK_QUANTITY }, (_, offset) => offset + 1)
                   .map(
                     quantity =>
                       `<option value="${quantity}"${selected(input.quantity === quantity)}>${quantity}</option>`,

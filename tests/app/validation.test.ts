@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createDefaultState, createInput } from '../../src/app/state';
-import { validateState } from '../../src/app/validation';
+import { MAXIMUM_SEARCH_INPUTS, validateState } from '../../src/app/validation';
 
 describe('workspace validation', () => {
   it('accepts a valid books workspace', () => {
@@ -32,5 +32,34 @@ describe('workspace validation', () => {
     state.inputs = [createInput('sword'), createInput(), createInput()];
     state.inputs[0]!.priorWork = 2;
     expect(validateState(state)).toMatchObject({ valid: false, message: expect.stringContaining('prior work') });
+  });
+
+  it('accepts advanced searches beyond the old ten-input table limit', () => {
+    const state = createDefaultState();
+    state.mode = 'advanced';
+    state.output = { item: 'boots', enchantments: { 0: 4 } };
+    const books = createInput();
+    books.enchantments = { 0: 1 };
+    books.quantity = 10;
+    state.inputs = [createInput('boots'), books, createInput(), createInput()];
+    state.inputs[2]!.enchantments = { 2: 4 };
+    state.inputs[3]!.enchantments = { 7: 3 };
+
+    expect(validateState(state).valid).toBe(true);
+  });
+
+  it('keeps a browser-safety limit independent of generated search tables', () => {
+    const state = createDefaultState();
+    state.mode = 'advanced';
+    state.output.item = 'boots';
+    const books = createInput();
+    books.enchantments = { 0: 1 };
+    books.quantity = 10;
+    state.inputs = [createInput('boots'), books, { ...books }, { ...books }];
+
+    expect(validateState(state)).toEqual({
+      valid: false,
+      message: `A search can contain at most ${MAXIMUM_SEARCH_INPUTS} inputs.`,
+    });
   });
 });

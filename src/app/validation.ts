@@ -2,6 +2,9 @@ import { catalog, enchantmentsForItem } from '../data/catalog';
 import { isLegacyConflict, PRIOR_WORK_COSTS } from '../calculator/rules';
 import type { CalculatorState, EnchantmentLevels } from '../types';
 import { effectiveItemForEnchantments, expandedInputCount, getBaseInput } from './constraints';
+import { MAXIMUM_BOOK_QUANTITY, MAXIMUM_SEARCH_INPUTS } from './limits';
+
+export { MAXIMUM_SEARCH_INPUTS } from './limits';
 
 export interface ValidationResult {
   valid: boolean;
@@ -19,8 +22,8 @@ export const validateState = (state: CalculatorState): ValidationResult => {
     if (selectedCount(state.output.enchantments) < 2) {
       return { valid: false, message: 'Add at least two enchanted books.' };
     }
-    if (selectedCount(state.output.enchantments) > 9) {
-      return { valid: false, message: 'Books mode supports up to nine enchantments.' };
+    if (selectedCount(state.output.enchantments) + 1 > MAXIMUM_SEARCH_INPUTS) {
+      return { valid: false, message: `A search can contain at most ${MAXIMUM_SEARCH_INPUTS} inputs.` };
     }
   }
 
@@ -44,8 +47,8 @@ export const validateState = (state: CalculatorState): ValidationResult => {
   const inputs = state.inputs.filter(input => !input.bypassed);
   const inputCount = expandedInputCount(state);
   if (inputCount < 3) return { valid: false, message: 'Add at least three active input items or books.' };
-  if (inputCount > (inputs.some(input => input.priorWork > 0) ? 8 : 10)) {
-    return { valid: false, message: 'This search has too many inputs for the available search tables.' };
+  if (inputCount > MAXIMUM_SEARCH_INPUTS) {
+    return { valid: false, message: `A search can contain at most ${MAXIMUM_SEARCH_INPUTS} inputs.` };
   }
 
   const physicalItems = inputs.filter(input => input.item !== 'enchanted_book');
@@ -61,8 +64,8 @@ export const validateState = (state: CalculatorState): ValidationResult => {
   }
 
   for (const input of inputs) {
-    if (!Number.isInteger(input.quantity) || input.quantity < 1 || input.quantity > 10) {
-      return { valid: false, message: 'Book quantity must be between 1 and 10.' };
+    if (!Number.isInteger(input.quantity) || input.quantity < 1 || input.quantity > MAXIMUM_BOOK_QUANTITY) {
+      return { valid: false, message: `Book quantity must be between 1 and ${MAXIMUM_BOOK_QUANTITY}.` };
     }
     if (!PRIOR_WORK_COSTS.includes(input.priorWork as (typeof PRIOR_WORK_COSTS)[number])) {
       return { valid: false, message: 'An input has an invalid prior work penalty.' };

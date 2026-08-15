@@ -1,141 +1,260 @@
-import priorWorkTreesJson from '../data/prior-work-trees.json';
-import searchTreesJson from '../data/search-trees.json';
-import { TreeEvaluator } from './tree';
-import type {
-  FastSearchResult,
-  SearchItem,
-  SearchOptions,
-  SearchResult,
-  SearchTreeTable,
-  TreeCandidate,
-} from './types';
+import {
+  combineAnvilComponents,
+  componentFromSearchItem,
+  componentSatisfiesGoal,
+  enchantmentIds,
+  type AnvilComponent,
+} from './anvil';
+import type { SearchItem, SearchOptions, SearchPlanNode, SearchProgress, SearchResult, TreeStructure } from './types';
 
-const searchTrees = searchTreesJson as unknown as SearchTreeTable;
-const priorWorkTrees = priorWorkTreesJson as unknown as SearchTreeTable;
+const MAXIMUM_EXPLORED_STATES = 500_000;
+const PROGRESS_INTERVAL = 1_000;
 
-const contributionCost = (weights: number[], contribution: number[]) => {
-  const offset = contribution.length - weights.length;
-  return weights.reduce((sum, weight, index) => sum + weight * (contribution[index + offset] ?? 0), 0);
+interface IndexedComponent extends AnvilComponent {
+  signature: string;
+}
+
+interface StateEntry {
+  signature: string;
+  count: number;
+}
+
+interface PreviousStep {
+  previousKey: string;
+  targetSignature: string;
+  sacrificeSignature: string;
+  resultSignature: string;
+}
+
+interface BestState {
+  totalCost: number;
+  enchantmentCost: number;
+  priorWorkCost: number;
+  previous?: PreviousStep;
+}
+
+interface QueueEntry {
+  key: string;
+  entries: StateEntry[];
+  totalCost: number;
+  sequence: number;
+}
+
+class MinHeap {
+  private readonly values: QueueEntry[] = [];
+
+  get size() {
+    return this.values.length;
+  }
+
+  push(value: QueueEntry) {
+    this.values.push(value);
+    let index = this.values.length - 1;
+    while (index > 0) {
+      const parent = Math.floor((index - 1) / 2);
+      if (!this.precedes(value, this.values[parent]!)) break;
+      this.values[index] = this.values[parent]!;
+      index = parent;
+    }
+    this.values[index] = value;
+  }
+
+  pop() {
+    const first = this.values[0];
+    const last = this.values.pop();
+    if (!first || !last || this.values.length === 0) return first;
+
+    let index = 0;
+    while (true) {
+      const left = index * 2 + 1;
+      const right = left + 1;
+      if (left >= this.values.length) break;
+      const child = right < this.values.length && this.precedes(this.values[right]!, this.values[left]!) ? right : left;
+      if (!this.precedes(this.values[child]!, last)) break;
+      this.values[index] = this.values[child]!;
+      index = child;
+    }
+    this.values[index] = last;
+    return first;
+  }
+
+  private precedes(left: QueueEntry, right: QueueEntry) {
+    return left.totalCost < right.totalCost || (left.totalCost === right.totalCost && left.sequence < right.sequence);
+  }
+}
+
+const componentSignature = (component: AnvilComponent) =>
+  JSON.stringify([
+    typeof component.enchant.item === 'string' ? component.enchant.item : '',
+    component.workCount,
+    enchantmentIds(component.enchant).map(id => [id, Number(component.enchant[id])]),
+  ]);
+
+const stateKey = (entries: StateEntry[]) => JSON.stringify(entries.map(entry => [entry.signature, entry.count]));
+
+const initialEntries = (components: IndexedComponent[]) => {
+  const counts = new Map<string, number>();
+  for (const component of components) counts.set(component.signature, (counts.get(component.signature) ?? 0) + 1);
+  return [...counts]
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([signature, count]) => ({ signature, count }));
 };
 
-const sortedIndexes = (values: number[], reverse = false) =>
-  values
-    .map((value, index) => ({ value, index }))
-    .sort((left, right) => (reverse ? right.value - left.value : left.value - right.value))
-    .map(entry => entry.index);
+const combineEntries = (
+  entries: StateEntry[],
+  targetSignature: string,
+  sacrificeSignature: string,
+  resultSignature: string,
+) => {
+  const counts = new Map(entries.map(entry => [entry.signature, entry.count]));
+  counts.set(targetSignature, (counts.get(targetSignature) ?? 0) - 1);
+  counts.set(sacrificeSignature, (counts.get(sacrificeSignature) ?? 0) - 1);
+  counts.set(resultSignature, (counts.get(resultSignature) ?? 0) + 1);
+  return [...counts]
+    .filter(([, count]) => count > 0)
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([signature, count]) => ({ signature, count }));
+};
 
-const orderWeights = (originalWeights: number[], contribution: number[]) => {
-  const hasItem = originalWeights[0] === 0;
-  const weights = originalWeights.slice(hasItem ? 1 : 0);
-  const reference = contribution.slice(hasItem ? 1 : 0);
-  const ascendingWeights = sortedIndexes(weights);
-  const descendingSlots = sortedIndexes(reference, true);
-  const result = new Array<number>(weights.length).fill(0);
+const takePlan = (plans: Map<string, SearchPlanNode[]>, signature: string) => {
+  const values = plans.get(signature);
+  const plan = values?.pop();
+  if (!plan) throw new Error('Unable to reconstruct the optimal anvil path.');
+  return plan;
+};
 
-  weights.forEach((_, index) => {
-    const slot = descendingSlots[index];
-    const source = ascendingWeights[index];
-    if (slot !== undefined && source !== undefined) result[slot] = weights[source] ?? 0;
+const reconstructPlan = (
+  items: SearchItem[],
+  initialComponents: IndexedComponent[],
+  goalKey: string,
+  bestStates: Map<string, BestState>,
+) => {
+  const steps: PreviousStep[] = [];
+  let currentKey = goalKey;
+  while (bestStates.get(currentKey)?.previous) {
+    const step = bestStates.get(currentKey)!.previous!;
+    steps.push(step);
+    currentKey = step.previousKey;
+  }
+  steps.reverse();
+
+  const plans = new Map<string, SearchPlanNode[]>();
+  items.forEach((item, index) => {
+    const signature = initialComponents[index]!.signature;
+    const values = plans.get(signature) ?? [];
+    values.push({ kind: 'leaf', item });
+    plans.set(signature, values);
   });
 
-  if (hasItem) result.unshift(0);
-  return result;
+  for (const step of steps) {
+    const left = takePlan(plans, step.targetSignature);
+    const right = takePlan(plans, step.sacrificeSignature);
+    const values = plans.get(step.resultSignature) ?? [];
+    values.push({ kind: 'combine', left, right });
+    plans.set(step.resultSignature, values);
+  }
+
+  const remaining = [...plans.values()].flat();
+  if (remaining.length !== 1) throw new Error('The optimal anvil path did not produce one final item.');
+  return remaining[0]!;
 };
 
-export const searchFast = (weights: number[]): FastSearchResult => {
-  const candidatesByCost = searchTrees[String(weights.length)];
-  if (!candidatesByCost || weights.length < 3 || weights.length > 10) {
-    throw new Error('Fast search supports between 3 and 10 total inputs.');
-  }
+const planStructure = (plan: SearchPlanNode): TreeStructure =>
+  plan.kind === 'leaf' ? 0 : [planStructure(plan.left), planStructure(plan.right)];
 
-  const sortedWeights = weights[0] === 0 ? weights.slice(1).sort((left, right) => right - left) : [...weights].sort();
-  let best: { candidate: TreeCandidate; priorWorkCost: number; enchantmentCost: number; total: number } | undefined;
+const planItems = (plan: SearchPlanNode): SearchItem[] =>
+  plan.kind === 'leaf' ? [plan.item] : [...planItems(plan.left), ...planItems(plan.right)];
 
-  for (const [priorCost, candidates] of Object.entries(candidatesByCost)) {
-    for (const candidate of candidates) {
-      const enchantmentCost = contributionCost(sortedWeights, candidate.sort);
-      const total = Number(priorCost) + enchantmentCost;
-      if (!best || total < best.total) {
-        best = { candidate, priorWorkCost: Number(priorCost), enchantmentCost, total };
-      }
-    }
-  }
-
-  if (!best) throw new Error('No valid search tree was found.');
-  return {
-    orderedWeights: orderWeights(weights, best.candidate.flat),
-    structure: best.candidate.strc,
-    priorWorkCost: best.priorWorkCost,
-    enchantmentCost: best.enchantmentCost,
-  };
-};
-
-const permutations = function* <T>(values: T[], start = 0): Generator<T[]> {
-  if (start >= values.length - 1) {
-    yield [...values];
-    return;
-  }
-
-  for (let index = start; index < values.length; index += 1) {
-    [values[start], values[index]] = [values[index] as T, values[start] as T];
-    yield* permutations(values, start + 1);
-    [values[start], values[index]] = [values[index] as T, values[start] as T];
-  }
-};
-
-const bestOrderingForTree = (items: SearchItem[], candidate: TreeCandidate, options: SearchOptions) => {
-  let best: { orderedItems: SearchItem[]; enchantmentCost: number; priorWorkCost: number; total: number } | undefined;
-
-  for (const orderedItems of permutations([...items])) {
-    if (!orderedItems[0]?.enchant.item) continue;
-    const evaluated = new TreeEvaluator(candidate.strc, options.edition, options.allowLegacyConflicts).evaluate(
-      orderedItems,
-      options.goal,
-    );
-    const total = evaluated.enchantmentCost + evaluated.priorWorkCost;
-    if (!best || total < best.total) {
-      best = {
-        orderedItems: [...orderedItems],
-        enchantmentCost: evaluated.enchantmentCost,
-        priorWorkCost: evaluated.priorWorkCost,
-        total,
-      };
-    }
-  }
-
-  return best;
+const reportProgress = (options: SearchOptions, exploredStates: number, queuedStates: number) => {
+  if (exploredStates % PROGRESS_INTERVAL !== 0) return;
+  const progress: SearchProgress = { exploredStates, queuedStates };
+  options.onProgress?.(progress);
 };
 
 export const searchAdvanced = (items: SearchItem[], options: SearchOptions): SearchResult => {
-  const hasPriorWork = items.some(item => item.enchant.prior !== undefined);
-  const table = hasPriorWork ? priorWorkTrees : searchTrees;
-  const maximum = hasPriorWork ? 8 : 10;
-  const candidatesByCost = table[String(items.length)];
+  if (items.length < 2) throw new Error('Search requires at least two input items.');
 
-  if (!candidatesByCost || items.length < 3 || items.length > maximum) {
-    throw new Error(`Advanced search supports between 3 and ${maximum} inputs for this configuration.`);
-  }
+  const componentBySignature = new Map<string, IndexedComponent>();
+  const initialComponents = items.map(item => {
+    const component = componentFromSearchItem(item);
+    const indexed = { ...component, signature: componentSignature(component) };
+    componentBySignature.set(indexed.signature, indexed);
+    return indexed;
+  });
+  const entries = initialEntries(initialComponents);
+  const initialKey = stateKey(entries);
+  const bestStates = new Map<string, BestState>([[initialKey, { totalCost: 0, enchantmentCost: 0, priorWorkCost: 0 }]]);
+  const finalized = new Set<string>();
+  const queue = new MinHeap();
+  let sequence = 0;
+  let exploredStates = 0;
+  queue.push({ key: initialKey, entries, totalCost: 0, sequence: sequence++ });
 
-  const groups = Object.values(candidatesByCost);
-  let best: SearchResult | undefined;
-  let bestTotal = Number.POSITIVE_INFINITY;
+  while (queue.size > 0) {
+    const state = queue.pop()!;
+    const best = bestStates.get(state.key);
+    if (!best || state.totalCost !== best.totalCost || finalized.has(state.key)) continue;
+    finalized.add(state.key);
+    exploredStates += 1;
+    if (exploredStates > MAXIMUM_EXPLORED_STATES) {
+      throw new Error('This search is too complex to finish safely in the browser. Try bypassing optional inputs.');
+    }
+    reportProgress(options, exploredStates, queue.size);
 
-  groups.forEach((candidates, groupIndex) => {
-    options.onProgress?.(groupIndex + 1, groups.length, candidates.length);
-    for (const candidate of candidates) {
-      const result = bestOrderingForTree(items, candidate, options);
-      if (result && result.total < bestTotal) {
-        bestTotal = result.total;
-        best = {
-          orderedItems: result.orderedItems,
-          structure: candidate.strc,
-          priorWorkCost: result.priorWorkCost,
-          enchantmentCost: result.enchantmentCost,
-        };
+    if (state.entries.length === 1 && state.entries[0]?.count === 1) {
+      const component = componentBySignature.get(state.entries[0].signature)!;
+      if (!component.enchant.item || !componentSatisfiesGoal(component, options.goal)) continue;
+      const plan = reconstructPlan(items, initialComponents, state.key, bestStates);
+      return {
+        orderedItems: planItems(plan),
+        structure: planStructure(plan),
+        enchantmentCost: best.enchantmentCost,
+        priorWorkCost: best.priorWorkCost,
+        exploredStates,
+      };
+    }
+
+    for (let targetIndex = 0; targetIndex < state.entries.length; targetIndex += 1) {
+      const targetEntry = state.entries[targetIndex]!;
+      const target = componentBySignature.get(targetEntry.signature)!;
+
+      for (let sacrificeIndex = 0; sacrificeIndex < state.entries.length; sacrificeIndex += 1) {
+        const sacrificeEntry = state.entries[sacrificeIndex]!;
+        if (targetIndex === sacrificeIndex && targetEntry.count < 2) continue;
+        const sacrifice = componentBySignature.get(sacrificeEntry.signature)!;
+        const combination = combineAnvilComponents(target, sacrifice, options.edition, options.allowLegacyConflicts);
+        if (!combination) continue;
+
+        const resultSignature = componentSignature(combination.component);
+        if (!componentBySignature.has(resultSignature)) {
+          componentBySignature.set(resultSignature, { ...combination.component, signature: resultSignature });
+        }
+        const nextEntries = combineEntries(
+          state.entries,
+          targetEntry.signature,
+          sacrificeEntry.signature,
+          resultSignature,
+        );
+        const nextKey = stateKey(nextEntries);
+        const totalCost = best.totalCost + combination.operationCost;
+        const known = bestStates.get(nextKey);
+        if (known && known.totalCost <= totalCost) continue;
+
+        bestStates.set(nextKey, {
+          totalCost,
+          enchantmentCost: best.enchantmentCost + combination.enchantmentCost,
+          priorWorkCost: best.priorWorkCost + combination.priorWorkCost,
+          previous: {
+            previousKey: state.key,
+            targetSignature: targetEntry.signature,
+            sacrificeSignature: sacrificeEntry.signature,
+            resultSignature,
+          },
+        });
+        queue.push({ key: nextKey, entries: nextEntries, totalCost, sequence: sequence++ });
       }
     }
-  });
+  }
 
-  if (!best || bestTotal >= 100_000) throw new Error('No valid combination satisfies the requested output.');
-  return best;
+  throw new Error('No survival-valid combination satisfies the requested output.');
 };

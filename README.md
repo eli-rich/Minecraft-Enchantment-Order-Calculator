@@ -2,12 +2,12 @@
 
 A browser-based calculator for finding the least-expensive order for combining Minecraft items and enchanted books in an anvil. It supports both **Bedrock Edition** and **Java Edition** rules and runs entirely in the browser.
 
-The search uses precomputed binary-tree structures to avoid evaluating every possible anvil tree. Advanced searches run in a Web Worker so the page remains responsive.
+The optimizer searches canonical multisets of items with Dijkstra's algorithm. Identical books share one state entry with a quantity, and searches run in a Web Worker so the page remains responsive.
 
 ## Features
 
 - Bedrock and Java rules, with Bedrock selected by default
-- A fast mode for one clean item plus individual enchanted books
+- A simple mode for one clean item plus individual enchanted books
 - An advanced mode for combining existing enchanted items and books
 - Prior work penalties and optional output conditions
 - Identical-book quantities for cases such as combining four level-I books into level III
@@ -44,14 +44,14 @@ The `dist/` directory is ordinary static output and can be deployed to Vercel, C
 ```text
 src/
   app/          State, validation, search orchestration, results, and PNG persistence
-  calculator/   Pure edition rules, tree evaluation, optimization, and Web Worker
-  data/         The editable catalog and generated precomputed search trees
+  calculator/   Pure anvil rules, shortest-path optimization, result evaluation, and Web Worker
+  data/         The editable item and enchantment catalog
   styles/       Base, component, and responsive styles
   ui/           Plain-DOM editor and page rendering
 tests/          Calculator, catalog, persistence, state, and UI regression tests
 ```
 
-The executable code is intentionally split by responsibility. The two large search-tree JSON files are generated static data, not application logic.
+The executable code is intentionally split by responsibility. Content data lives in the catalog; the optimizer does not require generated lookup tables.
 
 ## Adding items and enchantments
 
@@ -95,7 +95,7 @@ When updating the catalog:
 5. Use `"editions": ["java"]`, `["bedrock"]`, or both to control availability.
 6. Run `bun run test`. Catalog tests catch duplicate identifiers, broken references, asymmetric conflicts, invalid costs/levels, and missing edition support.
 
-Adding Minecraft content does not require regenerating the search-tree data. Those tables describe generic anvil tree shapes and depend only on input count and prior-work handling.
+Adding Minecraft content does not require regenerating optimizer data.
 
 ## Saved workspace compatibility
 
@@ -103,19 +103,26 @@ Current workspaces use a versioned payload containing the edition, mode, options
 
 ## How the search works
 
-An anvil sequence can be represented as a full binary tree:
+Each search state is a multiset of the remaining items and books. A legal ordered pair represents one anvil operation: the first component is the target, the second is the sacrifice, and their result replaces both. Components are canonically identified by their item, enchantments, levels, and prior-work count, so interchangeable copies are represented by a quantity instead of separate permutations.
 
-- Leaves are the input item and books.
-- Intermediate nodes are anvil operations.
-- The root is the final item.
+Dijkstra's algorithm explores these transitions in total-level-cost order. Because every operation has a nonnegative cost, the first valid one-item state removed from the priority queue is optimal. Backpointers reconstruct that path as a binary tree for the step-by-step result display.
 
-The right-side input contributes its enchantment cost at each operation, while the tree depth determines accumulated prior-work penalties. The project keeps precomputed candidate trees grouped by prior-work cost, then searches their valid input orderings for the lowest combined cost. Searches involving prior-work inputs use a separate reduced candidate table.
+The shared anvil function enforces item direction, applicability, conflicts, edition-specific enchantment costs, both prior-work penalties, result work count, and the 39-level survival limit for each operation. Advanced output enchantments act as a minimum goal; every active input must still be consumed into the final item.
 
-The calculator engine is pure TypeScript. Edition-specific differences are passed explicitly into every calculation rather than being stored in a global flag. Advanced searches use the same engine inside a typed Web Worker.
+The calculator engine is pure TypeScript. Edition-specific differences are passed explicitly into every calculation rather than being stored in a global flag. Both modes use the same engine inside a typed Web Worker. Searches accept up to 25 expanded inputs and stop with a useful error if a highly varied search exceeds the browser's state budget.
+
+## Mechanics verification
+
+The Java and Bedrock fixtures cover equal and unequal enchantment levels, book multipliers, conflicts, inapplicable enchantments, maximum levels, prior work, and the per-operation survival cap. The Java implementation was also checked against the official current Java server artifact (26.2 on August 14, 2026), including its anvil-menu bytecode and data-driven `anvil_cost` values. Minecraft's Java 1.21 notes document the data-driven enchantment fields and book cost halving, while the edition-specific examples are cross-checked against the community anvil mechanics documentation:
+
+- [Minecraft Java Edition 1.21 changelog](https://www.minecraft.net/en-us/article/minecraft-java-edition-1-21)
+- [Minecraft Wiki: Anvil mechanics](https://minecraft.wiki/w/Anvil_mechanics)
+
+No Minecraft binaries are included in this repository.
 
 ## Credits
 
-This repository is a modernization of the original [Minecraft Enchantment Order Calculator](https://github.com/kkchengaf/Minecraft-Enchantment-Order-Calculator), including its search approach and precomputed tree data.
+This repository is a modernization of the original [Minecraft Enchantment Order Calculator](https://github.com/kkchengaf/Minecraft-Enchantment-Order-Calculator). The current shortest-path optimizer replaces the original precomputed-tree search.
 
 ## License
 

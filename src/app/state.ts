@@ -1,5 +1,6 @@
 import { catalog } from '../data/catalog';
 import type { CalculatorState, Edition, EnchantmentLevels, InputItem, OutputGoal, SearchMode } from '../types';
+import { MAXIMUM_BOOK_QUANTITY } from './limits';
 
 export const STORAGE_KEY = 'minecraft-enchantment-calculator-v2';
 const LEGACY_STORAGE_KEY = 'enchant_pack';
@@ -50,7 +51,7 @@ const normalizeInput = (value: unknown): InputItem | null => {
         : numericEnchantments(input),
     quantity:
       item === 'enchanted_book' && Number.isInteger(Number(input.quantity))
-        ? Math.min(10, Math.max(1, Number(input.quantity)))
+        ? Math.min(MAXIMUM_BOOK_QUANTITY, Math.max(1, Number(input.quantity)))
         : 1,
     priorWork: Number(input.priorWork ?? input.prior ?? 0),
     bypassed: Boolean(input.bypassed ?? input.bypass),

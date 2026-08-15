@@ -11,8 +11,8 @@ worker.addEventListener('message', (event: MessageEvent<WorkerSearchRequest>) =>
   try {
     const result = searchAdvanced(event.data.items, {
       ...event.data.options,
-      onProgress: (current, total, candidates) => {
-        const message: WorkerSearchResponse = { type: 'progress', current, total, candidates };
+      onProgress: progress => {
+        const message: WorkerSearchResponse = { type: 'progress', ...progress };
         worker.postMessage(message);
       },
     });

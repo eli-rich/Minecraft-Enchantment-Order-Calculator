@@ -91,4 +91,20 @@ describe('anvil combination rules', () => {
     expect(result.priorWorkCost).toBe(4);
     expect(rootValue(result).height).toBe(3);
   });
+
+  it.each(['java', 'bedrock'] as const)('rejects operations over the 39-level survival limit in %s', edition => {
+    const result = evaluatePair(
+      edition,
+      { cost: 0, enchant: { item: 'sword', 9: 1, prior: 31 } },
+      { cost: 0, enchant: { 17: 1, prior: 15 } },
+    );
+
+    expect(result.invalid).toBe(true);
+  });
+
+  it.each(['java', 'bedrock'] as const)('rejects a sacrifice that contributes no valid enchantment in %s', edition => {
+    const result = evaluatePair(edition, { cost: 0, enchant: { item: 'sword', 9: 1 } }, { cost: 0, enchant: { 0: 1 } });
+
+    expect(result.invalid).toBe(true);
+  });
 });

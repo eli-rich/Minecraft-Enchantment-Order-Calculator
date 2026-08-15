@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { searchAdvanced, searchFast } from '../../src/calculator/search';
+import { searchAdvanced } from '../../src/calculator/search';
+import { TreeEvaluator } from '../../src/calculator/tree';
 import type { SearchItem } from '../../src/calculator/types';
 
 const advancedItems: SearchItem[] = [
@@ -9,27 +10,17 @@ const advancedItems: SearchItem[] = [
 ];
 
 describe('calculator search regression fixtures', () => {
-  it('preserves the legacy fast-search result', () => {
-    expect(searchFast([0, 1, 2, 3])).toEqual({
-      orderedWeights: [0, 2, 3, 1],
-      structure: [
-        [0, 1],
-        [1, 2],
-      ],
-      priorWorkCost: 2,
-      enchantmentCost: 7,
-    });
-  });
-
   it.each([
     ['java', 7],
     ['bedrock', 4],
   ] as const)('preserves the %s advanced-search result', (edition, enchantmentCost) => {
     const result = searchAdvanced(advancedItems, { edition, allowLegacyConflicts: false });
-    expect(result.structure).toEqual([[0, 1], [1]]);
     expect(result.priorWorkCost).toBe(1);
     expect(result.enchantmentCost).toBe(enchantmentCost);
-    expect(result.orderedItems).toEqual(advancedItems);
+    const evaluated = new TreeEvaluator(result.structure, edition, false).evaluate(result.orderedItems);
+    expect(evaluated.invalid).toBe(false);
+    expect(evaluated.enchantmentCost).toBe(result.enchantmentCost);
+    expect(evaluated.priorWorkCost).toBe(result.priorWorkCost);
   });
 
   it.each([
@@ -47,17 +38,20 @@ describe('calculator search regression fixtures', () => {
   });
 
   it.each([
-    ['java', 3],
-    ['bedrock', 2],
-  ] as const)('preserves conflicting-enchantment costs for %s', (edition, enchantmentCost) => {
-    const items: SearchItem[] = [
-      { cost: 2, enchant: { item: 'sword', 9: 2 } },
-      { cost: 4, enchant: { 10: 2 } },
-      { cost: 4, enchant: { 17: 2 } },
-    ];
-    const result = searchAdvanced(items, { edition, allowLegacyConflicts: false });
-    expect(result.enchantmentCost).toBe(enchantmentCost);
-  });
+    ['java', 5],
+    ['bedrock', 4],
+  ] as const)(
+    'finds a legal path when an input contains a conflicting enchantment in %s',
+    (edition, enchantmentCost) => {
+      const items: SearchItem[] = [
+        { cost: 2, enchant: { item: 'sword', 9: 2 } },
+        { cost: 4, enchant: { 10: 2 } },
+        { cost: 4, enchant: { 17: 2 } },
+      ];
+      const result = searchAdvanced(items, { edition, allowLegacyConflicts: false });
+      expect(result.enchantmentCost).toBe(enchantmentCost);
+    },
+  );
 
   it.each([
     ['java', 12],
@@ -70,5 +64,45 @@ describe('calculator search regression fixtures', () => {
     );
 
     expect(result.enchantmentCost + result.priorWorkCost).toBe(expectedTotal);
+  });
+
+  it.each(['java', 'bedrock'] as const)(
+    'supports more than ten inputs with repeated low-level books in %s',
+    edition => {
+      const protectionBook: SearchItem = { cost: 0, enchant: { 0: 1 } };
+      const items: SearchItem[] = [
+        { cost: 0, enchant: { item: 'boots' } },
+        ...Array.from({ length: 8 }, () => ({ ...protectionBook, enchant: { ...protectionBook.enchant } })),
+        { cost: 0, enchant: { 2: 4 } },
+        { cost: 0, enchant: { 7: 3 } },
+        { cost: 0, enchant: { 26: 1 } },
+      ];
+      const goal = { 0: 4, 2: 4, 7: 3, 26: 1 };
+
+      const result = searchAdvanced(items, { edition, allowLegacyConflicts: false, goal });
+      const evaluated = new TreeEvaluator(result.structure, edition, false).evaluate(result.orderedItems, goal);
+
+      expect(items).toHaveLength(12);
+      expect(evaluated.invalid).toBe(false);
+      expect(evaluated.enchantmentCost).toBe(result.enchantmentCost);
+      expect(evaluated.priorWorkCost).toBe(result.priorWorkCost);
+    },
+  );
+
+  it.each([
+    ['java', 91],
+    ['bedrock', 65],
+  ] as const)('combines sixteen identical level-I books into a level-V enchantment in %s', (edition, totalCost) => {
+    const items: SearchItem[] = [
+      { cost: 0, enchant: { item: 'sword' } },
+      ...Array.from({ length: 16 }, () => ({ cost: 0, enchant: { 9: 1 } })),
+    ];
+    const goal = { 9: 5 };
+
+    const result = searchAdvanced(items, { edition, allowLegacyConflicts: false, goal });
+    const evaluated = new TreeEvaluator(result.structure, edition, false).evaluate(result.orderedItems, goal);
+
+    expect(evaluated.invalid).toBe(false);
+    expect(result.enchantmentCost + result.priorWorkCost).toBe(totalCost);
   });
 });
