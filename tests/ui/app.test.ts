@@ -110,6 +110,22 @@ describe('calculator UI', () => {
     expect(labels).toEqual([...labels].sort((left, right) => left.localeCompare(right)));
   });
 
+  it.each(['java', 'bedrock'] as const)('offers Spear and filters its enchantments in %s', edition => {
+    change(document.querySelector<HTMLInputElement>(`input[name="edition"][value="${edition}"]`)!);
+    change(document.querySelector<HTMLInputElement>('input[name="mode"][value="advanced"]')!);
+
+    const item = document.querySelector<HTMLSelectElement>('[data-action="set-input-item"]')!;
+    expect(Array.from(item.options).map(option => option.value)).toContain('spear');
+    change(item, 'spear');
+
+    const enchantments = Array.from(
+      document.querySelector<HTMLSelectElement>('[data-action="add-enchantment"]')!.options,
+    ).map(option => option.textContent);
+    expect(enchantments).toContain('Lunge');
+    expect(enchantments).toContain('Mending');
+    expect(enchantments).not.toContain('Sweeping Edge');
+  });
+
   it('groups input and output items by category and alphabetizes each group', () => {
     change(document.querySelector<HTMLInputElement>('input[name="mode"][value="advanced"]')!);
     const selectors = [document.querySelector<HTMLSelectElement>('[data-action="set-input-item"]')!];

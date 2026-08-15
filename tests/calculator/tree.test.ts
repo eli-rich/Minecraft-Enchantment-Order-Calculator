@@ -107,4 +107,29 @@ describe('anvil combination rules', () => {
 
     expect(result.invalid).toBe(true);
   });
+
+  it.each([
+    ['java', 6],
+    ['bedrock', 2],
+  ] as const)('applies the Lunge item multiplier to Spears in %s', (edition, expectedCost) => {
+    const result = evaluatePair(
+      edition,
+      { cost: 0, enchant: { item: 'spear', 41: 2 } },
+      { cost: 0, enchant: { item: 'spear', 41: 2 } },
+    );
+
+    expect(result.enchantmentCost).toBe(expectedCost);
+    expect(rootValue(result).enchant).toMatchObject({ item: 'spear', 41: 3 });
+  });
+
+  it.each(['java', 'bedrock'] as const)('allows Lunge and Mending together on Spears in %s', edition => {
+    const result = evaluatePair(
+      edition,
+      { cost: 0, enchant: { item: 'spear', 41: 1 } },
+      { cost: 0, enchant: { 26: 1 } },
+    );
+
+    expect(result.invalid).toBe(false);
+    expect(rootValue(result).enchant).toMatchObject({ item: 'spear', 26: 1, 41: 1 });
+  });
 });

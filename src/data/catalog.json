@@ -493,6 +493,18 @@
       "editions": ["java", "bedrock"]
     },
     {
+      "id": 41,
+      "key": "lunge",
+      "label": "Lunge",
+      "maxLevel": 3,
+      "costs": {
+        "item": 2,
+        "book": 1
+      },
+      "conflicts": [],
+      "editions": ["java", "bedrock"]
+    },
+    {
       "id": 1000,
       "key": "sweeping_edge",
       "label": "Sweeping Edge",
@@ -654,12 +666,19 @@
       "editions": ["java", "bedrock"]
     },
     {
+      "key": "spear",
+      "label": "Spear",
+      "category": "weapon",
+      "enchantments": [9, 10, 11, 12, 13, 14, 17, 26, 28, 41],
+      "editions": ["java", "bedrock"]
+    },
+    {
       "key": "enchanted_book",
       "label": "Enchanted Book",
       "category": "book",
       "enchantments": [
         0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29,
-        30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 1000
+        30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 1000
       ],
       "editions": ["java", "bedrock"]
     }

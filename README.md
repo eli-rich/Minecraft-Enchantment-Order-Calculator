@@ -115,9 +115,11 @@ The calculator engine is pure TypeScript. Edition-specific differences are passe
 
 ## Mechanics verification
 
-The Java and Bedrock fixtures cover equal and unequal enchantment levels, book multipliers, conflicts, inapplicable enchantments, maximum levels, prior work, and the per-operation survival cap. The Java implementation was also checked against the official current Java server artifact (26.2 on August 14, 2026), including its anvil-menu bytecode and data-driven `anvil_cost` values. Minecraft's Java 1.21 notes document the data-driven enchantment fields and book cost halving, while the edition-specific examples are cross-checked against the community anvil mechanics documentation:
+The Java and Bedrock fixtures cover equal and unequal enchantment levels, book multipliers, conflicts, inapplicable enchantments, maximum levels, prior work, and the per-operation survival cap. The Java implementation was also checked against the official current Java server artifact (26.2 on August 14, 2026), including its anvil-menu bytecode and data-driven `anvil_cost` values. Spear and Lunge availability is checked against the official Mounts of Mayhem release notes, with Lunge's cost, maximum level, applicability, and conflicts verified from the Java artifact. Minecraft's Java 1.21 notes document the data-driven enchantment fields and book cost halving, while the edition-specific examples are cross-checked against the community anvil mechanics documentation:
 
 - [Minecraft Java Edition 1.21 changelog](https://www.minecraft.net/en-us/article/minecraft-java-edition-1-21)
+- [Minecraft: Java Edition 1.21.11 - Mounts of Mayhem](https://feedback.minecraft.net/hc/en-us/articles/41809981427213-Minecraft-Java-Edition-1-21-11-Mounts-of-Mayhem)
+- [Minecraft: Bedrock Edition 1.21.130 - Mounts of Mayhem](https://feedback.minecraft.net/hc/en-us/articles/41446685014669-Minecraft-Bedrock-Edition-1-21-130-Mounts-of-Mayhem)
 - [Minecraft Wiki: Anvil mechanics](https://minecraft.wiki/w/Anvil_mechanics)
 
 No Minecraft binaries are included in this repository.

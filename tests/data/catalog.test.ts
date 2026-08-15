@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { catalog, ITEM_CATEGORIES, itemsForEdition } from '../../src/data/catalog';
+import { catalog, enchantmentsForItem, ITEM_CATEGORIES, itemsForEdition } from '../../src/data/catalog';
 
 describe('catalog', () => {
   it('has unique enchantment IDs and keys', () => {
@@ -36,6 +36,30 @@ describe('catalog', () => {
 
   it('marks Sweeping Edge as Java-only', () => {
     expect(catalog.enchantmentById.get(1000)?.editions).toEqual(['java']);
+  });
+
+  it.each(['java', 'bedrock'] as const)('supports Spear and Lunge in %s', edition => {
+    const spear = catalog.itemByKey.get('spear');
+    const lunge = catalog.enchantmentById.get(41);
+    const enchantmentKeys = enchantmentsForItem('spear', edition).map(enchantment => enchantment.key);
+
+    expect(spear?.editions).toContain(edition);
+    expect(lunge).toMatchObject({ key: 'lunge', maxLevel: 3, costs: { item: 2, book: 1 }, conflicts: [] });
+    expect(lunge?.editions).toContain(edition);
+    expect(enchantmentKeys).toEqual(
+      expect.arrayContaining([
+        'bane_of_arthropods',
+        'fire_aspect',
+        'knockback',
+        'looting',
+        'lunge',
+        'mending',
+        'sharpness',
+        'smite',
+        'unbreaking',
+      ]),
+    );
+    expect(enchantmentKeys).not.toContain('sweeping_edge');
   });
 
   it('has valid levels, costs, and edition support', () => {
