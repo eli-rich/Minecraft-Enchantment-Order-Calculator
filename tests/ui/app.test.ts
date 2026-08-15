@@ -59,6 +59,24 @@ describe('calculator UI', () => {
     expect(labels).not.toContain('Sharpness');
   });
 
+  it('filters conflicts across active inputs and restores allowed legacy pairs', () => {
+    change(document.querySelector<HTMLInputElement>('input[name="mode"][value="advanced"]')!);
+    change(document.querySelector<HTMLSelectElement>('[data-action="set-input-item"]')!, 'helmet');
+    change(document.querySelector<HTMLSelectElement>('[data-action="add-enchantment"]')!, '0');
+    document.querySelector<HTMLButtonElement>('[data-action="add-input"]')?.click();
+
+    const availableLabels = () =>
+      Array.from(document.querySelectorAll<HTMLSelectElement>('[data-action="add-enchantment"]')[1]!.options).map(
+        option => option.textContent,
+      );
+    expect(availableLabels()).not.toContain('Fire Protection');
+
+    const legacy = document.querySelector<HTMLInputElement>('[data-action="toggle-legacy-conflicts"]')!;
+    legacy.checked = true;
+    change(legacy);
+    expect(availableLabels()).toContain('Fire Protection');
+  });
+
   it('updates the derived output to the highest reachable enchantment level', () => {
     change(document.querySelector<HTMLInputElement>('input[name="mode"][value="advanced"]')!);
     change(document.querySelector<HTMLSelectElement>('[data-action="set-input-item"]')!, 'helmet');

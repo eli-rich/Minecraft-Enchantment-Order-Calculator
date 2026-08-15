@@ -1,4 +1,5 @@
 import { catalog, enchantmentsForItem } from '../data/catalog';
+import { isLegacyConflict } from '../calculator/rules';
 import type { CalculatorState, Edition, EnchantmentLevels, InputItem, OutputGoal } from '../types';
 
 export const getBaseInput = (state: CalculatorState) => state.inputs.find(input => input.item !== 'enchanted_book');
@@ -9,6 +10,31 @@ export const effectiveItemForEnchantments = (state: CalculatorState, input: Inpu
 export const levelsForItem = (levels: EnchantmentLevels, itemKey: string, edition: Edition) => {
   const validIds = new Set(enchantmentsForItem(itemKey, edition).map(enchantment => enchantment.id));
   return Object.fromEntries(Object.entries(levels).filter(([id]) => validIds.has(Number(id))));
+};
+
+export const blockedEnchantmentIds = (
+  candidateIds: number[],
+  selectedIds: Iterable<number>,
+  allowLegacyConflicts: boolean,
+) => {
+  const selected = new Set(selectedIds);
+  return new Set(
+    candidateIds.filter(id =>
+      (catalog.enchantmentById.get(id)?.conflicts ?? []).some(
+        conflictId => selected.has(conflictId) && (!allowLegacyConflicts || !isLegacyConflict(id, conflictId)),
+      ),
+    ),
+  );
+};
+
+export const blockedInputEnchantmentIds = (state: CalculatorState, input: InputItem) => {
+  const selectedIds = state.inputs
+    .filter(candidate => candidate.id === input.id || !candidate.bypassed)
+    .flatMap(candidate => Object.keys(candidate.enchantments).map(Number));
+  const candidateIds = enchantmentsForItem(effectiveItemForEnchantments(state, input), state.edition).map(
+    enchantment => enchantment.id,
+  );
+  return blockedEnchantmentIds(candidateIds, selectedIds, state.allowLegacyConflicts);
 };
 
 export const deriveAdvancedOutput = (state: CalculatorState): OutputGoal => {

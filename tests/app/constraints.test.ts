@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   applyBaseItemConstraints,
+  blockedInputEnchantmentIds,
   deriveAdvancedOutput,
   effectiveItemForEnchantments,
 } from '../../src/app/constraints';
@@ -88,5 +89,21 @@ describe('base item constraints', () => {
     state.inputs = [helmet, book];
 
     expect(deriveAdvancedOutput(state)).toEqual({ item: '', enchantments: {} });
+  });
+
+  it('blocks conflicts selected on other active inputs unless the legacy pair is enabled', () => {
+    const state = createDefaultState();
+    state.mode = 'advanced';
+    const helmet = createInput('helmet');
+    helmet.enchantments = { 0: 4 };
+    const book = createInput();
+    state.inputs = [helmet, book];
+
+    expect(blockedInputEnchantmentIds(state, book)).toContain(1);
+    state.allowLegacyConflicts = true;
+    expect(blockedInputEnchantmentIds(state, book)).not.toContain(1);
+    helmet.bypassed = true;
+    state.allowLegacyConflicts = false;
+    expect(blockedInputEnchantmentIds(state, book)).not.toContain(1);
   });
 });

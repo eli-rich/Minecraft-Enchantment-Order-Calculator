@@ -1,5 +1,11 @@
 import { enchantmentsForItem, formatItemLabel, ITEM_CATEGORIES, itemsForEdition } from '../data/catalog';
-import { deriveAdvancedOutput, effectiveItemForEnchantments, getBaseInput } from '../app/constraints';
+import {
+  blockedEnchantmentIds,
+  blockedInputEnchantmentIds,
+  deriveAdvancedOutput,
+  effectiveItemForEnchantments,
+  getBaseInput,
+} from '../app/constraints';
 import { MAXIMUM_BOOK_QUANTITY } from '../app/limits';
 import type { CalculatorState, Edition, EnchantmentLevels, InputItem } from '../types';
 import { checked, escapeHtml, selected } from './html';
@@ -10,6 +16,7 @@ interface EnchantmentEditorOptions {
   edition: Edition;
   scope: 'input' | 'output';
   inputId?: string;
+  blockedIds?: ReadonlySet<number>;
 }
 
 const editorAttributes = (options: EnchantmentEditorOptions, enchantmentId?: number) =>
@@ -56,7 +63,9 @@ export const renderEnchantmentEditor = (options: EnchantmentEditorOptions) => {
         </div>`,
     )
     .join('');
-  const unused = available.filter(enchantment => !selectedIds.includes(enchantment.id));
+  const unused = available.filter(
+    enchantment => !selectedIds.includes(enchantment.id) && !options.blockedIds?.has(enchantment.id),
+  );
 
   return `
     <div class="enchantment-editor">
@@ -112,8 +121,8 @@ export const renderInputCard = (state: CalculatorState, input: InputItem, index:
       </div>
       <div class="card-actions">
         <button class="text-button" type="button" data-action="duplicate-input" data-input-id="${escapeHtml(input.id)}">Duplicate</button>
-        <button class="text-button" type="button" data-action="toggle-bypass" data-input-id="${escapeHtml(input.id)}">
-          ${input.bypassed ? 'Include' : 'Bypass'}
+        <button class="text-button" type="button" data-action="toggle-bypass" data-input-id="${escapeHtml(input.id)}" title="Temporarily exclude this input without deleting it">
+          ${input.bypassed ? 'Include' : 'Exclude'}
         </button>
         <button class="icon-button" type="button" data-action="remove-input" data-input-id="${escapeHtml(input.id)}" aria-label="Remove input ${index + 1}">×</button>
       </div>
@@ -156,6 +165,7 @@ export const renderInputCard = (state: CalculatorState, input: InputItem, index:
       edition: state.edition,
       scope: 'input',
       inputId: input.id,
+      blockedIds: blockedInputEnchantmentIds(state, input),
     })}
   </article>`;
 
@@ -214,6 +224,11 @@ export const renderOutputCard = (state: CalculatorState) => `
             itemKey: state.output.item,
             edition: state.edition,
             scope: 'output',
+            blockedIds: blockedEnchantmentIds(
+              enchantmentsForItem(state.output.item, state.edition).map(enchantment => enchantment.id),
+              Object.keys(state.output.enchantments).map(Number),
+              state.allowLegacyConflicts,
+            ),
           })}`
     }
   </section>`;
